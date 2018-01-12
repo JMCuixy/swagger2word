@@ -1,16 +1,16 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "出行解决方案 API文档",
+    "description": "API文档",
     "version": "1.0",
     "title": "Travel Solution API",
     "contact": {},
     "license": {
-      "name": "千夏软件（SummerSoft）",
-      "url": "http://www.summersoft.net/"
+      "name": "",
+      "url": ""
     }
   },
-  "host": "5000.gr8ce620.summersoft.ali-sh.goodrain.net:10080",
+  "host": "http://localhost:8080",
   "basePath": "/",
   "tags": [
     {

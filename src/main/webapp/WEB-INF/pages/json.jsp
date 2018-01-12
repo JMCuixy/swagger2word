@@ -1,24 +1,23 @@
-<%--<%@ page contentType="application/msword" language="java" %>--%>
+<%@ page contentType="text/html" pageEncoding="UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8"/>
-    <title>Title</title>
+    <title>tool</title>
     <style type="text/css">
         .bg {
-            background-color: rgb(141,179,126);
+            background-color: rgb(84, 127, 177);
         }
 
         tr {
             height: 20px;
-            font-size: 14px;
+            font-size: 12px;
         }
 
     </style>
 </head>
 <body>
-<div style="width:1000px; margin: 0 auto">
+<div style="width:800px; margin: 0 auto">
     <table border="1" cellspacing="0" cellpadding="0" width="100%">
         <tr class="bg">
             <td colspan="6">登陆</td>
