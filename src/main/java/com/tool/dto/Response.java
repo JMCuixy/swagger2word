@@ -15,14 +15,15 @@ public class Response {
     private String name;
 
     /**
-     * 长度
-     */
-    private Integer length;
-
-    /**
      * 说明
      */
     private String remark;
+
+    public Response(String description, String name, String remark) {
+        this.description = description;
+        this.name = name;
+        this.remark = remark;
+    }
 
     public String getDescription() {
         return description;
@@ -38,14 +39,6 @@ public class Response {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Integer getLength() {
-        return length;
-    }
-
-    public void setLength(Integer length) {
-        this.length = length;
     }
 
     public String getRemark() {
