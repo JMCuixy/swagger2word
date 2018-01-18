@@ -16,14 +16,14 @@ public class Request {
     private String name;
 
     /**
-     * 参数类型
+     * 数据类型
      */
     private String type;
 
     /**
-     * 长度
+     * 参数类型
      */
-    private Integer length;
+    private String paramType;
 
     /**
      * 是否必填
@@ -59,14 +59,6 @@ public class Request {
         this.type = type;
     }
 
-    public Integer getLength() {
-        return length;
-    }
-
-    public void setLength(Integer length) {
-        this.length = length;
-    }
-
     public Boolean getRequire() {
         return require;
     }
@@ -81,5 +73,13 @@ public class Request {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public String getParamType() {
+        return paramType;
+    }
+
+    public void setParamType(String paramType) {
+        this.paramType = paramType;
     }
 }

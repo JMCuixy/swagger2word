@@ -6,20 +6,27 @@ import java.util.List;
  * Created by XiuYin.Cui on 2018/1/11.
  */
 public class Table {
+
     /**
-     * 标题
+     * 大标题
+     */
+    private String title;
+    /**
+     * 小标题
      */
     private String tag;
     /**
      * url
      */
     private String url;
+
     /**
-     * 请求参数格式
+     * 响应参数格式
      */
-    private String requestForm;
+    private String responseForm;
+
     /**
-     * 返回值类型
+     * 请求方式
      */
     private String requestType;
 
@@ -43,6 +50,22 @@ public class Table {
      */
     private String responseParam;
 
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
     public String getUrl() {
         return url;
     }
@@ -51,12 +74,12 @@ public class Table {
         this.url = url;
     }
 
-    public String getRequestForm() {
-        return requestForm;
+    public String getResponseForm() {
+        return responseForm;
     }
 
-    public void setRequestForm(String requestForm) {
-        this.requestForm = requestForm;
+    public void setResponseForm(String responseForm) {
+        this.responseForm = responseForm;
     }
 
     public String getRequestType() {
