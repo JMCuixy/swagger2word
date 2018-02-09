@@ -19,6 +19,11 @@ public class Response {
      */
     private String remark;
 
+
+    public  Response(){
+
+    }
+
     public Response(String description, String name, String remark) {
         this.description = description;
         this.name = name;

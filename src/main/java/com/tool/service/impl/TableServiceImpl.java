@@ -5,11 +5,15 @@ import com.tool.dto.Request;
 import com.tool.dto.Response;
 import com.tool.dto.Table;
 import com.tool.service.TableService;
+import com.tool.util.HttpClientUtil;
 import com.tool.util.NetUtil;
+import com.tool.util.http.common.HttpConfig;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URL;
 import java.util.*;
 
@@ -19,99 +23,121 @@ import java.util.*;
 @Service
 public class TableServiceImpl implements TableService {
 
-    @Override
-    public List<Table> tableList() {
-        List<Table> list = new LinkedList();
+    private static Map<String, Object> MAP = new HashMap<>(256);
+
+    static {
         try {
+            //解析json
             ClassLoader classLoader = TableService.class.getClassLoader();
             URL resource = classLoader.getResource("data.json");
-            Map map = new ObjectMapper().readValue(resource, Map.class);
-            //得到host，用于模拟http请求
-            String host = String.valueOf(map.get("host"));
-            //解析paths
-            LinkedHashMap<String, LinkedHashMap> paths = (LinkedHashMap) map.get("paths");
-            if (paths != null) {
-                Iterator<Map.Entry<String, LinkedHashMap>> iterator = paths.entrySet().iterator();
-                while (iterator.hasNext()) {
-                    Table table = new Table();
-                    List<Request> requestList = new LinkedList<Request>();
-                    String requestType = "";
-
-                    Map.Entry<String, LinkedHashMap> next = iterator.next();
-                    String url = next.getKey();//得到url
-                    LinkedHashMap<String, LinkedHashMap> value = next.getValue();
-                    //得到请求方式，输出结果类似为 get/post/delete/put 这样
-                    Set<String> requestTypes = value.keySet();
-                    for (String str : requestTypes) {
-                        requestType += str + "/";
-                    }
-                    Iterator<Map.Entry<String, LinkedHashMap>> it2 = value.entrySet().iterator();
-                    //解析请求
-                    Map.Entry<String, LinkedHashMap> get = it2.next();//得到get
-                    LinkedHashMap getValue = get.getValue();
-                    String title = (String) ((List) getValue.get("tags")).get(0);//得到大标题
-                    String tag = String.valueOf(getValue.get("summary"));
-                    //请求体
-                    ArrayList parameters = (ArrayList) getValue.get("parameters");
-                    if (parameters != null && parameters.size() > 0) {
-                        for (int i = 0; i < parameters.size(); i++) {
-                            Request request = new Request();
-                            LinkedHashMap<String, Object> param = (LinkedHashMap) parameters.get(i);
-                            request.setDescription(String.valueOf(param.get("description")));
-                            request.setName(String.valueOf(param.get("name")));
-                            request.setType(String.valueOf(param.get("type")));
-                            request.setParamType(String.valueOf(param.get("in")));
-                            request.setRequire((Boolean) param.get("required"));
-                            requestList.add(request);
-                        }
-                    }
-                    //返回体，比较固定
-                    List<Response> responseList = listResponse();
-                    //模拟一次HTTP请求,封装请求体和返回体，如果是Restful的文档可以再补充
-                    if (requestType.contains("post")) {
-                        Map<String, String> stringStringMap = toPostBody(requestList);
-                        table.setRequestParam(stringStringMap.toString());
-                        String post = NetUtil.post(host + url, stringStringMap);
-                        table.setResponseParam(post);
-                    } else if (requestType.contains("get")) {
-                        String s = toGetHeader(requestList);
-                        table.setResponseParam(s);
-                        String getStr = NetUtil.get(host + url + s);
-                        table.setResponseParam(getStr);
-                    }
-
-                    //封装Table
-                    table.setTitle(title);
-                    table.setUrl(url);
-                    table.setTag(tag);
-                    table.setResponseForm("application/json");
-                    table.setRequestType(StringUtils.removeEnd(requestType, "/"));
-                    table.setRequestList(requestList);
-                    table.setResponseList(responseList);
-                    list.add(table);
-                }
-            }
-            return list;
-
+            MAP = new ObjectMapper().readValue(resource, Map.class);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
     }
 
 
-    //封装返回信息，可能需求不一样，可以自定义
-    private List<Response> listResponse() {
-        List<Response> responseList = new LinkedList<Response>();
-        responseList.add(new Response("受影响的行数", "counts", null));
-        responseList.add(new Response("结果说明信息", "msg", null));
-        responseList.add(new Response("是否成功", "success", null));
-        responseList.add(new Response("返回对象", "data", null));
-        responseList.add(new Response("错误代码", "errCode", null));
-        return responseList;
+    @Override
+    public List<Table> tableList() {
+        List<Table> list = new LinkedList();
+        //得到host，用于模拟http请求
+        String host = String.valueOf(MAP.get("host"));
+        //解析paths
+        LinkedHashMap<String, LinkedHashMap> paths = (LinkedHashMap) MAP.get("paths");
+        if (paths != null) {
+            Iterator<Map.Entry<String, LinkedHashMap>> iterator = paths.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Table table = new Table();
+                List<Request> requestList = new LinkedList<>();
+                List<Response> responseList = new LinkedList<>();
+
+                String requestForm; //请求参数格式，类似于 multipart/form-data
+                String requestType = ""; //请求方式，类似为 get/post/delete/put 这样
+                String url; //请求路径
+                String title; //大标题（类说明）
+                String tag; //小标题 （方法说明）
+                String requestParam = ""; //请求参数
+                String responseParam = ""; //返回参数
+
+                Map.Entry<String, LinkedHashMap> next = iterator.next();
+                url = next.getKey();
+
+                LinkedHashMap<String, LinkedHashMap> value = next.getValue();
+                Set<String> requestTypes = value.keySet();
+                for (String str : requestTypes) {
+                    requestType += str + "/";
+                }
+
+                Iterator<Map.Entry<String, LinkedHashMap>> iterator2 = value.entrySet().iterator();
+                //不管有几种请求方式，都只解析第一种
+                Map.Entry<String, LinkedHashMap> get = iterator2.next();
+                LinkedHashMap getValue = get.getValue();
+                title = (String) ((List) getValue.get("tags")).get(0);
+                requestForm = (String) ((List) getValue.get("consumes")).get(0);
+                tag = String.valueOf(getValue.get("summary"));
+                //请求体
+                List parameters = (ArrayList) getValue.get("parameters");
+                if (parameters != null && parameters.size() > 0) {
+                    for (int i = 0; i < parameters.size(); i++) {
+                        Request request = new Request();
+                        LinkedHashMap<String, Object> param = (LinkedHashMap) parameters.get(i);
+                        request.setDescription(String.valueOf(param.get("description")));
+                        request.setName(String.valueOf(param.get("name")));
+                        request.setType(String.valueOf(param.get("type")));
+                        request.setParamType(String.valueOf(param.get("in")));
+                        request.setRequire((Boolean) param.get("required"));
+                        requestList.add(request);
+                    }
+                }
+                //返回体
+                LinkedHashMap<String, Object> responses = (LinkedHashMap) getValue.get("responses");
+                Iterator<Map.Entry<String, Object>> iterator3 = responses.entrySet().iterator();
+                while (iterator3.hasNext()) {
+                    Response response = new Response();
+                    Map.Entry<String, Object> entry = iterator3.next();
+                    String status = entry.getKey(); //状态码 200 201 401 403 404 这样
+                    LinkedHashMap<String, Object> statusInfo = (LinkedHashMap) entry.getValue();
+                    String statusDescription = (String) statusInfo.get("description");
+                    response.setName(status);
+                    response.setDescription(statusDescription);
+                    response.setRemark(null);
+                    responseList.add(response);
+                }
+
+                //模拟一次HTTP请求,封装请求体和返回体，如果是Restful的文档可以再补充
+                if (requestType.contains("post")) {
+                    Map<String, String> strMap = toPostBody(requestList);
+                    requestParam = strMap.toString();
+                    responseParam = NetUtil.postWithForm(host + url, strMap);
+                } else if (requestType.contains("get")) {
+                    String s = getParam(requestList);
+                    requestParam = s;
+                    responseParam = "";
+                }
+
+                //封装Table
+                table.setTitle(title);
+                table.setUrl(url);
+                table.setTag(tag);
+                table.setRequestForm(requestForm);
+                table.setResponseForm("application/json");
+                table.setRequestType(StringUtils.removeEnd(requestType, "/"));
+                table.setRequestList(requestList);
+                table.setResponseList(responseList);
+                table.setRequestParam(requestParam);
+                table.setResponseParam(responseParam);
+                list.add(table);
+            }
+        }
+        return list;
     }
 
-    //封装post请求体
+    /**
+     * 封装post请求体
+     *
+     * @param list
+     * @return
+     */
     private Map<String, String> toPostBody(List<Request> list) {
         Map<String, String> map = new HashMap<>(16);
         if (list != null && list.size() > 0) {
@@ -128,6 +154,8 @@ public class TableServiceImpl implements TableService {
                     case "double":
                         map.put(name, "0.0");
                         break;
+                    case "boolean":
+                        map.put(name, "true");
                     default:
                         map.put(name, "null");
                         break;
@@ -137,33 +165,45 @@ public class TableServiceImpl implements TableService {
         return map;
     }
 
-    //封装get请求头
-    private String toGetHeader(List<Request> list) {
+    /**
+     * 封装get参数
+     *
+     * @param list
+     * @return
+     */
+    private String getParam(List<Request> list) {
+        HttpConfig instance = HttpConfig.getInstance();
+        Header[] headers ;
+
         StringBuffer stringBuffer = new StringBuffer();
         if (list != null && list.size() > 0) {
             for (Request request : list) {
                 String name = request.getName();
                 String type = request.getType();
+                String paramType = request.getParamType();
                 switch (type) {
                     case "string":
-                        stringBuffer.append(name+"&=string");
+                        stringBuffer.append(name + "&=string");
                         break;
                     case "integer":
-                        stringBuffer.append(name+"&=0");
+                        stringBuffer.append(name + "&=0");
                         break;
                     case "double":
-                        stringBuffer.append(name+"&=0.0");
+                        stringBuffer.append(name + "&=0.0");
                         break;
+                    case "boolean":
+                        stringBuffer.append(name + "&=true");
                     default:
-                        stringBuffer.append(name+"&=null");
+                        stringBuffer.append(name + "&=null");
                         break;
                 }
             }
         }
         String s = stringBuffer.toString();
-        if ("".equalsIgnoreCase(s)){
+        if ("".equalsIgnoreCase(s)) {
             return "";
         }
         return "?" + StringUtils.removeStart(s, "&");
     }
+
 }

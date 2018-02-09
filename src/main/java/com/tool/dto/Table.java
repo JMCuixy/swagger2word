@@ -21,6 +21,11 @@ public class Table {
     private String url;
 
     /**
+     * 请求参数格式
+     */
+    private String requestForm;
+
+    /**
      * 响应参数格式
      */
     private String responseForm;
@@ -46,7 +51,7 @@ public class Table {
     private String requestParam;
 
     /**
-     * 返回值
+     * 返回参数
      */
     private String responseParam;
 
@@ -120,5 +125,13 @@ public class Table {
 
     public void setResponseParam(String responseParam) {
         this.responseParam = responseParam;
+    }
+
+    public String getRequestForm() {
+        return requestForm;
+    }
+
+    public void setRequestForm(String requestForm) {
+        this.requestForm = requestForm;
     }
 }
