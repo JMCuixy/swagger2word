@@ -39,7 +39,11 @@
                         <td colspan="5">${t.requestType}</td>
                     </tr>
                     <tr>
-                        <td>返回值类型</td>
+                        <td>请求类型</td>
+                        <td colspan="5">${t.requestForm}</td>
+                    </tr>
+                    <tr>
+                        <td>返回类型</td>
                         <td colspan="5">${t.responseForm}</td>
                     </tr>
 
@@ -67,8 +71,8 @@
                         </tr>
                     </c:forEach>
                     <tr class="bg" align="center">
-                        <td>返回参数</td>
-                        <td>参数名</td>
+                        <td>状态码</td>
+                        <td>描述</td>
                         <td colspan="4">说明</td>
                     </tr>
 

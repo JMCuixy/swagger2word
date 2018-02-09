@@ -10,11 +10,10 @@
   <properties>
     <!-- spring版本号 -->
     <spring.version>4.1.5.RELEASE</spring.version>
-    <!-- mybatis版本号 -->
-    <mybatis.version>3.2.6</mybatis.version>
     <!-- log4j日志文件管理包版本 -->
     <slf4j.version>1.6.6</slf4j.version>
     <log4j.version>1.2.17</log4j.version>
+    <httpclient.version>4.4.1</httpclient.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <dependencies>
@@ -88,8 +87,19 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.5.3</version>
+      <version>${httpclient.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+      <version>${httpclient.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpasyncclient</artifactId>
+      <version>4.1</version>
+    </dependency>
+
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
