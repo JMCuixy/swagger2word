@@ -50,7 +50,11 @@ public class HttpClientUtil {
 
     static {
         client4HTTP = HCB.getInstance().build();
-        client4HTTPS = HCB.getInstance().ssl().build();
+        try {
+            client4HTTPS = HCB.getInstance().ssl().build();
+        } catch (HttpProcessException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -83,13 +87,19 @@ public class HttpClientUtil {
      * @return 返回处理结果
      * @throws HttpProcessException http处理异常
      */
-    public static String get(String url, Header[] headers, HttpContext context, String encoding) throws HttpProcessException {
-        HttpConfig instance = HttpConfig.getInstance();
-        instance.setUrl(url);
-        instance.setHeaders(headers);
-        instance.setContext(context);
-        instance.setEncoding(encoding);
-        return get(instance);
+    public static String get(String url, Header[] headers, HttpContext context, String encoding) {
+        try {
+            HttpConfig instance = HttpConfig.getInstance();
+            instance.setUrl(url);
+            instance.setHeaders(headers);
+            instance.setContext(context);
+            instance.setEncoding(encoding);
+            return get(instance);
+        } catch (HttpProcessException e) {
+            e.printStackTrace();
+        }
+        return null;
+
     }
 
     /**
@@ -115,14 +125,19 @@ public class HttpClientUtil {
      * @return 返回处理结果
      * @throws HttpProcessException http处理异常
      */
-    public static String post(String url, Header[] headers, Map<String, Object> parasMap, HttpContext context, String encoding) throws HttpProcessException {
-        HttpConfig instance = HttpConfig.getInstance();
-        instance.setUrl(url);
-        instance.setHeaders(headers);
-        instance.setMap(parasMap);
-        instance.setContext(context);
-        instance.setEncoding(encoding);
-        return post(instance);
+    public static String post(String url, Header[] headers, Map<String, Object> parasMap, HttpContext context, String encoding) {
+        try {
+            HttpConfig instance = HttpConfig.getInstance();
+            instance.setUrl(url);
+            instance.setHeaders(headers);
+            instance.setMap(parasMap);
+            instance.setContext(context);
+            instance.setEncoding(encoding);
+            return post(instance);
+        } catch (HttpProcessException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**

@@ -78,7 +78,7 @@ public class HCB extends HttpClientBuilder {
      * @return 返回当前对象
      * @throws HttpProcessException http处理异常
      */
-    public HCB ssl() {
+    public HCB ssl() throws HttpProcessException {
         return (HCB) this.setSSLSocketFactory(ssls.getSSLCONNSF(sslpv));
     }
 
