@@ -1,8 +1,8 @@
-###### 版本： SwaggerToWord 1.0 （2018-01-18 09:53）
+##### 版本： SwaggerToWord 1.0 （2018-01-18 09:53）
 ###### 简介：一个Swagger API 文档 转 Word 文档的工具项目
 ###### 备注：项目想法和说明可以参考：http://www.cnblogs.com/jmcui/p/8298823.html
 *****
-###### 版本：SwaggerToWord 1.1 (2018-02-11 11:33)
+##### 版本：SwaggerToWord 1.1 (2018-02-11 11:33)
 ###### 更新说明：
                 已解决：1、替换HttpClient工具类以适配更多的Restful服务。
                        2、把 json 示例文件替换成 官方的示例文件
