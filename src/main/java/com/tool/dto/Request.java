@@ -6,11 +6,6 @@ package com.tool.dto;
 public class Request {
 
     /**
-     * 请求参数
-     */
-    private String description;
-
-    /**
      * 参数名
      */
     private String name;
@@ -34,14 +29,6 @@ public class Request {
      * 说明
      */
     private String remark;
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     public String getName() {
         return name;

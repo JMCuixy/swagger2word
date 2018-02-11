@@ -28,27 +28,26 @@
                 <h5>${t.tag}</h5>   <%--这个是每个请求的说明，方便生成文档后进行整理--%>
                 <table border="1" cellspacing="0" cellpadding="0" width="100%">
                     <tr class="bg">
-                        <td colspan="6"><c:out value="${t.tag}"/></td>
+                        <td colspan="5"><c:out value="${t.tag}"/></td>
                     </tr>
                     <tr>
                         <td>URL</td>
-                        <td colspan="5">${t.url}</td>
+                        <td colspan="4">${t.url}</td>
                     </tr>
                     <tr>
                         <td>请求方式</td>
-                        <td colspan="5">${t.requestType}</td>
+                        <td colspan="4">${t.requestType}</td>
                     </tr>
                     <tr>
                         <td>请求类型</td>
-                        <td colspan="5">${t.requestForm}</td>
+                        <td colspan="4">${t.requestForm}</td>
                     </tr>
                     <tr>
                         <td>返回类型</td>
-                        <td colspan="5">${t.responseForm}</td>
+                        <td colspan="4">${t.responseForm}</td>
                     </tr>
 
                     <tr class="bg" align="center">
-                        <td>请求参数</td>
                         <td>参数名</td>
                         <td>数据类型</td>
                         <td>参数类型</td>
@@ -57,7 +56,6 @@
                     </tr>
                     <c:forEach items="${t.requestList}" var="req">
                         <tr align="center">
-                            <td>${req.description}</td>
                             <td>${req.name}</td>
                             <td>${req.type}</td>
                             <td>${req.paramType}</td>
@@ -67,33 +65,33 @@
                                     <c:otherwise>N</c:otherwise>
                                 </c:choose>
                             </td>
-                            <td>${remark}</td>
+                            <td>${req.remark}</td>
                         </tr>
                     </c:forEach>
                     <tr class="bg" align="center">
                         <td>状态码</td>
                         <td>描述</td>
-                        <td colspan="4">说明</td>
+                        <td colspan="3">说明</td>
                     </tr>
 
                     <c:forEach items="${t.responseList}" var="res">
                         <tr align="center">
-                            <td>${res.description}</td>
                             <td>${res.name}</td>
-                            <td colspan="4">${res.remark}</td>
+                            <td>${res.description}</td>
+                            <td colspan="3">${res.remark}</td>
                         </tr>
                     </c:forEach>
 
                     <tr class="bg">
-                        <td colspan="6">示例</td>
+                        <td colspan="5">示例</td>
                     </tr>
                     <tr class="specialHeight">
                         <td class="bg">请求参数</td>
-                        <td colspan="5">${t.requestParam}</td>
+                        <td colspan="4">${t.requestParam}</td>
                     </tr>
                     <tr class="specialHeight">
                         <td class="bg">返回值</td>
-                        <td colspan="5">${t.responseParam}</td>
+                        <td colspan="4">${t.responseParam}</td>
                     </tr>
                 </table>
                 <br>

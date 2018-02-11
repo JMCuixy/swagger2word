@@ -6,14 +6,10 @@ import com.tool.dto.Response;
 import com.tool.dto.Table;
 import com.tool.service.TableService;
 import com.tool.util.HttpClientUtil;
-import com.tool.util.NetUtil;
-import com.tool.util.http.common.HttpConfig;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.Header;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URL;
 import java.util.*;
 
@@ -51,7 +47,7 @@ public class TableServiceImpl implements TableService {
                 List<Request> requestList = new LinkedList<>();
                 List<Response> responseList = new LinkedList<>();
 
-                String requestForm; //请求参数格式，类似于 multipart/form-data
+                String requestForm = ""; //请求参数格式，类似于 multipart/form-data
                 String requestType = ""; //请求方式，类似为 get/post/delete/put 这样
                 String url; //请求路径
                 String title; //大标题（类说明）
@@ -73,7 +69,12 @@ public class TableServiceImpl implements TableService {
                 Map.Entry<String, LinkedHashMap> get = iterator2.next();
                 LinkedHashMap getValue = get.getValue();
                 title = (String) ((List) getValue.get("tags")).get(0);
-                requestForm = (String) ((List) getValue.get("consumes")).get(0);
+                List<String> consumes = (List) getValue.get("consumes");
+                if (consumes != null && consumes.size() > 0) {
+                    for (String consume : consumes) {
+                        requestForm += consume + "、";
+                    }
+                }
                 tag = String.valueOf(getValue.get("summary"));
                 //请求体
                 List parameters = (ArrayList) getValue.get("parameters");
@@ -81,11 +82,11 @@ public class TableServiceImpl implements TableService {
                     for (int i = 0; i < parameters.size(); i++) {
                         Request request = new Request();
                         LinkedHashMap<String, Object> param = (LinkedHashMap) parameters.get(i);
-                        request.setDescription(String.valueOf(param.get("description")));
                         request.setName(String.valueOf(param.get("name")));
                         request.setType(String.valueOf(param.get("type")));
                         request.setParamType(String.valueOf(param.get("in")));
                         request.setRequire((Boolean) param.get("required"));
+                        request.setRemark(String.valueOf(param.get("description")));
                         requestList.add(request);
                     }
                 }
@@ -105,14 +106,17 @@ public class TableServiceImpl implements TableService {
                 }
 
                 //模拟一次HTTP请求,封装请求体和返回体，如果是Restful的文档可以再补充
+                String request;
+                request = StringUtils.remove(url, "{");
+                request = StringUtils.remove(request, "}");//去掉路径中的{}参数请求
                 if (requestType.contains("post")) {
-                    Map<String, String> strMap = toPostBody(requestList);
+                    Map<String, Object> strMap = otherRequestParam(requestList);
                     requestParam = strMap.toString();
-                    responseParam = NetUtil.postWithForm(host + url, strMap);
+                    responseParam = HttpClientUtil.post(host + request, null, strMap, null, "utf-8");
                 } else if (requestType.contains("get")) {
-                    String s = getParam(requestList);
+                    String s = getRequestParam(requestList);
                     requestParam = s;
-                    responseParam = "";
+                    responseParam = HttpClientUtil.get(host + request + s, null, null, "utf-8");
                 }
 
                 //封装Table
@@ -138,8 +142,8 @@ public class TableServiceImpl implements TableService {
      * @param list
      * @return
      */
-    private Map<String, String> toPostBody(List<Request> list) {
-        Map<String, String> map = new HashMap<>(16);
+    private Map<String, Object> otherRequestParam(List<Request> list) {
+        Map<String, Object> map = new HashMap<>(16);
         if (list != null && list.size() > 0) {
             for (Request request : list) {
                 String name = request.getName();
@@ -171,30 +175,26 @@ public class TableServiceImpl implements TableService {
      * @param list
      * @return
      */
-    private String getParam(List<Request> list) {
-        HttpConfig instance = HttpConfig.getInstance();
-        Header[] headers ;
-
+    private String getRequestParam(List<Request> list) {
         StringBuffer stringBuffer = new StringBuffer();
         if (list != null && list.size() > 0) {
             for (Request request : list) {
                 String name = request.getName();
                 String type = request.getType();
-                String paramType = request.getParamType();
                 switch (type) {
                     case "string":
-                        stringBuffer.append(name + "&=string");
+                        stringBuffer.append("&" + name + "=string");
                         break;
                     case "integer":
-                        stringBuffer.append(name + "&=0");
+                        stringBuffer.append("&" + name + "=0");
                         break;
                     case "double":
-                        stringBuffer.append(name + "&=0.0");
+                        stringBuffer.append("&" + name + "=0.0");
                         break;
                     case "boolean":
-                        stringBuffer.append(name + "&=true");
+                        stringBuffer.append("&" + name + "=true");
                     default:
-                        stringBuffer.append(name + "&=null");
+                        stringBuffer.append("&" + name + "=null");
                         break;
                 }
             }
