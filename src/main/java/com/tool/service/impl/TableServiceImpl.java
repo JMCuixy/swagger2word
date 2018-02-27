@@ -20,6 +20,7 @@ import java.util.*;
 public class TableServiceImpl implements TableService {
 
     private static Map<String, Object> MAP = new HashMap<>(256);
+    private static Map<String, Object> DEFINITIONS = new HashMap<>(256); //自定义对象集
 
     static {
         try {
@@ -27,6 +28,7 @@ public class TableServiceImpl implements TableService {
             ClassLoader classLoader = TableService.class.getClassLoader();
             URL resource = classLoader.getResource("data.json");
             MAP = new ObjectMapper().readValue(resource, Map.class);
+            DEFINITIONS = (LinkedHashMap) MAP.get("definitions");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -48,6 +50,7 @@ public class TableServiceImpl implements TableService {
                 List<Response> responseList = new LinkedList<>();
 
                 String requestForm = ""; //请求参数格式，类似于 multipart/form-data
+                String responseForm = ""; //响应参数格式
                 String requestType = ""; //请求方式，类似为 get/post/delete/put 这样
                 String url; //请求路径
                 String title; //大标题（类说明）
@@ -61,7 +64,7 @@ public class TableServiceImpl implements TableService {
                 LinkedHashMap<String, LinkedHashMap> value = next.getValue();
                 Set<String> requestTypes = value.keySet();
                 for (String str : requestTypes) {
-                    requestType += str + "/";
+                    requestType += str + "、";
                 }
 
                 Iterator<Map.Entry<String, LinkedHashMap>> iterator2 = value.entrySet().iterator();
@@ -75,6 +78,13 @@ public class TableServiceImpl implements TableService {
                         requestForm += consume + "、";
                     }
                 }
+                List<String> produces = (List) getValue.get("produces");
+                if (produces != null && produces.size() > 0) {
+                    for (String produce : produces) {
+                        responseForm += produce + "、";
+                    }
+                }
+
                 tag = String.valueOf(getValue.get("summary"));
                 //请求体
                 List parameters = (ArrayList) getValue.get("parameters");
@@ -83,7 +93,7 @@ public class TableServiceImpl implements TableService {
                         Request request = new Request();
                         LinkedHashMap<String, Object> param = (LinkedHashMap) parameters.get(i);
                         request.setName(String.valueOf(param.get("name")));
-                        request.setType(String.valueOf(param.get("type")));
+                        request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
                         request.setParamType(String.valueOf(param.get("in")));
                         request.setRequire((Boolean) param.get("required"));
                         request.setRemark(String.valueOf(param.get("description")));
@@ -123,9 +133,9 @@ public class TableServiceImpl implements TableService {
                 table.setTitle(title);
                 table.setUrl(url);
                 table.setTag(tag);
-                table.setRequestForm(requestForm);
-                table.setResponseForm("application/json");
-                table.setRequestType(StringUtils.removeEnd(requestType, "/"));
+                table.setRequestForm(StringUtils.removeEnd(requestForm, "、"));
+                table.setResponseForm(StringUtils.removeEnd(responseForm, "、"));
+                table.setRequestType(StringUtils.removeEnd(requestType, "、"));
                 table.setRequestList(requestList);
                 table.setResponseList(responseList);
                 table.setRequestParam(requestParam);
@@ -205,5 +215,7 @@ public class TableServiceImpl implements TableService {
         }
         return "?" + StringUtils.removeStart(s, "&");
     }
+
+
 
 }
