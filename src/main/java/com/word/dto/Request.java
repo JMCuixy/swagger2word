@@ -1,4 +1,4 @@
-package com.tool.dto;
+package com.word.dto;
 
 /**
  * Created by XiuYin.Cui on 2018/1/11.
