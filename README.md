@@ -25,7 +25,9 @@
 <p>----------------------------------</p>
 <h5>版本：SwaggerToWord 1.2 (2018-06-21)</h5>
 <p>更新说明：</P>
-<p>1、引入了Spring的RestTemplate取代 HttpClients 以支持更多的Restful请求。</p>
-<p>2、命名规范以及增加异常处理，对于无法处理的HTTP请求返回空字符串。</p>
-<p>3、修改之前导入data.josn的方式，变成restTemplate.getForObject("SwaggerJson的url地址",Map.class);的动态获取方式</p>
+<p>
+1、引入了Spring的RestTemplate取代 HttpClients 以支持更多的Restful请求。<br/>
+2、命名规范以及增加异常处理，对于无法处理的HTTP请求返回空字符串。<br/>
+3、修改之前导入data.josn的方式，变成restTemplate.getForObject("SwaggerJson的url地址",Map.class);的动态获取方式
+</p>
   
