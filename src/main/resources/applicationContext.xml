@@ -11,9 +11,24 @@
        http://www.springframework.org/schema/mvc/spring-mvc.xsd
        ">
 
-    <context:component-scan base-package="com.tool"/>
+    <context:component-scan base-package="com.word"/>
+    <context:property-placeholder location="classpath:resources.properties" file-encoding="utf-8"/>
 
-    <mvc:annotation-driven/>
+    <mvc:annotation-driven>
+        <!--使用HTTP信息转换器-->
+        <mvc:message-converters>
+            <!--在JSON和类型化的对象或非类型化的HashMap间互相读取和写入-->
+            <bean id="httpMessageConverter" class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+                <!--服务端支持返回的资源形式-->
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>text/html;charset=UTF-8</value>
+                        <value>application/json;charset=UTF-8</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
 
     <!--当逻辑视图名中包含斜线时，这个斜线也会带到资源的路径名中-->
     <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">

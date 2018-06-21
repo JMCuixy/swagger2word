@@ -31,6 +31,10 @@
                         <td colspan="5"><c:out value="${t.tag}"/></td>
                     </tr>
                     <tr>
+                        <td>接口描述</td>
+                        <td colspan="4">${t.description}</td>
+                    </tr>
+                    <tr>
                         <td>URL</td>
                         <td colspan="4">${t.url}</td>
                     </tr>
