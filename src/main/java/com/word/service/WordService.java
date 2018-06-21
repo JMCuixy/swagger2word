@@ -1,12 +1,12 @@
-package com.tool.service;
+package com.word.service;
 
-import com.tool.dto.Table;
+import com.word.dto.Table;
 
 import java.util.List;
 
 /**
  * Created by XiuYin.Cui on 2018/1/12.
  */
-public interface TableService {
+public interface WordService {
     List<Table> tableList();
 }

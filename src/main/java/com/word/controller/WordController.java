@@ -1,7 +1,7 @@
-package com.tool.controller;
+package com.word.controller;
 
-import com.tool.dto.Table;
-import com.tool.service.TableService;
+import com.word.dto.Table;
+import com.word.service.WordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,17 +13,15 @@ import java.util.List;
  * Created by XiuYin.Cui on 2018/1/11.
  */
 @Controller
-public class JsonController {
+public class WordController {
 
     @Autowired
-    private TableService tableService;
+    private WordService tableService;
 
-    @RequestMapping("/getJson")
+    @RequestMapping("/getWord")
     public String getJson(Model model){
         List<Table> list = tableService.tableList();
         model.addAttribute("table",list);
-        return "json";
+        return "word";
     }
-
-
 }

@@ -1,16 +1,31 @@
-##### 版本： SwaggerToWord 1.0 （2018-01-18 09:53）
-###### 简介：一个Swagger API 文档 转 Word 文档的工具项目
-###### 备注：项目想法和说明可以参考：http://www.cnblogs.com/jmcui/p/8298823.html
-*****
-##### 版本：SwaggerToWord 1.1 (2018-02-11 11:33)
-###### 更新说明：
- * `已解决：`   
---替换HttpClient工具类以适配更多的Restful服务。   
---把 json 示例文件替换成 官方的示例文件。    
---更改写死的模板。让生成的 word 的内容都从Swagger api 中来。   
- * `待解决：`    
---Http 诸多的参数请求形式，比如 header、body、file等 还没有去处理。   
---用户自定义的对象还没有适配。   
-###### 备注：持续开发中，坚持出一个能适配所有Swagger文档的稳定版本。
-*****
-可能，这个项目用起来还需要大家根据自己的要求修改蛮多代码的。还请大家不吝贡献自己的力量，让这个工具变得更加有适用性！共勉
+<h5>使用步骤：</h5>
+<p>
+1、修改resources目录下的resources.properties的swaggerUrl为Swagger Json资源的url地址。<br/>
+2、服务启动后：访问 http://host(主机):port(端口)/getWord，etc：http://localhost:8080/getWord <br/>
+3、将生成的getWord文件，增加后缀名 getWord.doc 。
+</p>
+<p>----------------------------------</p>
+<h5> 版本： SwaggerToWord 1.0 （2018-01-18）</h5>
+<p>简介：一个Swagger API 文档 转 Word 文档的工具项目</P>
+<p>备注：项目想法和说明可以参考：<a href='http://www.cnblogs.com/jmcui/p/8298823.html'>http://www.cnblogs.com/jmcui/p/8298823.html</a></P>
+<p>----------------------------------</p>
+<h5>版本：SwaggerToWord 1.1 (2018-02-11)</h5>
+<p>更新说明：</P>
+ <h6>已解决：</h6>
+ <ul>   
+   <li>替换HttpClient工具类以适配更多的Restful服务。</li>   
+   <li>把 json 示例文件替换成 官方的示例文件。</li>    
+   <li>更改写死的模板。让生成的 word 的内容都从Swagger api 中来。</li> 
+ </ul>
+ <h6>待解决：</h6>
+ <ul>
+   <li>Http 诸多的参数请求形式，比如 header、body、file等 还没有去处理。</li>
+   <li>用户自定义的对象还没有适配。</li> 
+ </ul>   
+<p>----------------------------------</p>
+<h5>版本：SwaggerToWord 1.2 (2018-06-21)</h5>
+<p>更新说明：</P>
+<p>1、引入了Spring的RestTemplate取代 HttpClients 以支持更多的Restful请求。</p>
+<p>2、命名规范以及增加异常处理，对于无法处理的HTTP请求返回空字符串。</p>
+<p>3、修改之前导入data.josn的方式，变成restTemplate.getForObject("SwaggerJson的url地址",Map.class);的动态获取方式</p>
+  

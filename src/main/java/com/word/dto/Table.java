@@ -1,4 +1,4 @@
-package com.tool.dto;
+package com.word.dto;
 
 import java.util.List;
 
@@ -19,6 +19,11 @@ public class Table {
      * url
      */
     private String url;
+
+    /**
+     * 描述
+     */
+    private String description;
 
     /**
      * 请求参数格式
@@ -77,6 +82,14 @@ public class Table {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getResponseForm() {

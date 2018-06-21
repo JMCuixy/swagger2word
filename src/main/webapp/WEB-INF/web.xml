@@ -28,7 +28,7 @@
 
     <!--配置Servlet 注册DispatcherServlet-->
     <servlet>
-        <servlet-name>appServlet</servlet-name>
+        <servlet-name>SwaggerToWord</servlet-name>
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
         <init-param>
             <param-name>contextConfigLocation</param-name>
@@ -37,7 +37,7 @@
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
-        <servlet-name>appServlet</servlet-name>
+        <servlet-name>SwaggerToWord</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
 </web-app>
