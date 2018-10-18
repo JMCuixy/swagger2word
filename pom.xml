@@ -9,7 +9,7 @@
   <url>http://maven.apache.org</url>
   <properties>
     <!-- spring版本号 -->
-    <spring.version>4.1.5.RELEASE</spring.version>
+    <spring.version>4.3.17.RELEASE</spring.version>
     <swagger.version>2.8.0</swagger.version>
     <httpclient.version>4.4.1</httpclient.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
