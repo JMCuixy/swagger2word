@@ -1,4 +1,4 @@
-package json;
+package word;
 
 import com.word.dto.Request;
 import com.word.dto.Response;

@@ -40,12 +40,15 @@ public class WordServiceImpl implements WordService {
                 Table table = new Table();
                 List<Request> requestList = new LinkedList<>();
                 List<Response> responseList = new LinkedList<>();
-                String requestForm = ""; //请求参数格式，类似于 multipart/form-data
-                String responseForm = ""; //响应参数格式
-                String requestType = ""; //请求方式，类似为 get,post,delete,put 这样
-                String url; //请求路径
-                String title; //大标题（类说明）
-                String tag; //小标题 （方法说明）
+                // 请求参数格式，类似于 multipart/form-data
+                String requestForm = "";
+                // 请求参数格式，类似于 multipart/form-data
+                String responseForm = "";
+                // 请求方式，类似为 get,post,delete,put 这样
+                String requestType = "";
+                String url; // 请求路径
+                String title; // 大标题（类说明）
+                String tag; // 小标题 （方法说明）
                 String description; //接口描述
 
                 Map.Entry<String, LinkedHashMap> path = it.next();
@@ -58,7 +61,7 @@ public class WordServiceImpl implements WordService {
                 }
 
                 Iterator<Map.Entry<String, LinkedHashMap>> it2 = value.entrySet().iterator();
-                //不管有几种请求方式，都只解析第一种
+                // 不管有几种请求方式，都只解析第一种
                 Map.Entry<String, LinkedHashMap> firstRequestType = it2.next();
                 LinkedHashMap content = firstRequestType.getValue();
                 title = String.valueOf(((List) content.get("tags")).get(0));
@@ -97,7 +100,8 @@ public class WordServiceImpl implements WordService {
                 while (it3.hasNext()) {
                     Response response = new Response();
                     Map.Entry<String, Object> entry = it3.next();
-                    String statusCode = entry.getKey(); //状态码 200 201 401 403 404 这样
+                    // 状态码 200 201 401 403 404 这样
+                    String statusCode = entry.getKey();
                     LinkedHashMap<String, Object> statusCodeInfo = (LinkedHashMap) entry.getValue();
                     String statusDescription = (String) statusCodeInfo.get("description");
                     response.setName(statusCode);
@@ -106,8 +110,9 @@ public class WordServiceImpl implements WordService {
                     responseList.add(response);
                 }
 
-                //模拟一次HTTP请求,封装请求体和返回体
-                String restType = firstRequestType.getKey();//得到请求方式
+                // 模拟一次HTTP请求,封装请求体和返回体
+                // 得到请求方式
+                String restType = firstRequestType.getKey();
                 Map<String, Object> paramMap = ParamMap(requestList);
                 String buildUrl = buildUrl(host + url, requestList);
 
@@ -191,8 +196,8 @@ public class WordServiceImpl implements WordService {
                     break;
             }
         } catch (Exception ex) {
-            //无法使用 restTemplate 发送的请求，返回""
-            //ex.printStackTrace();
+            // 无法使用 restTemplate 发送的请求，返回""
+            // ex.printStackTrace();
             return "";
         }
         return String.valueOf(object);

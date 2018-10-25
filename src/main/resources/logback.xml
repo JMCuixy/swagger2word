@@ -1,143 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <property name="LOG_PATH" value="/var/summersoft"/>
-    <appender name="FILEERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/log_error.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/log-error-%d{yyyy-MM-dd}.%i.log
-            </fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>100MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-        </rollingPolicy>
-        <append>true</append>
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%-5p [%d][%mdc{mdc_userId}] %C:%L - %m %n</pattern>
-            <charset>utf-8</charset>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>error</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-    </appender>
-
-    <appender name="FILEWARN"
-              class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/log_warn.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/log-warn-%d{yyyy-MM-dd}.%i.log
-            </fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>100MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-        </rollingPolicy>
-        <append>true</append>
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%-5p [%d][%mdc{mdc_userId}] %C:%L - %m %n</pattern>
-            <charset>utf-8</charset>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>WARN</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-    </appender>
-
-    <appender name="FILEINFO"
-              class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/log_info.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/log-info-%d{yyyy-MM-dd}.%i.log
-            </fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>100MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-        </rollingPolicy>
-        <append>true</append>
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%-5p [%d][%mdc{mdc_userId}] %C:%L - %m %n</pattern>
-            <charset>utf-8</charset>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-    </appender>
-
-
-    <appender name="FILEDEBUG"
-              class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/log_debug.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/log-debug-%d{yyyy-MM-dd}.%i.log
-            </fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>100MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-        </rollingPolicy>
-        <append>true</append>
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%-5p [%d][%mdc{mdc_userId}] %C:%L - %m %n</pattern>
-            <charset>utf-8</charset>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>DEBUG</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-    </appender>
-
-    <appender name="FILTER_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${LOG_PATH}/log_filter.log</File>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} : %m%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/log_filter.%d{yyyy-MM-dd}</fileNamePattern>
-        </rollingPolicy>
     </appender>
 
-    <logger name="FILTER_INFO_LOGGER" additivity="false" level="INFO">
-        <appender-ref ref="FILTER_INFO"/>
-    </logger>
-
-
-    <appender name="INTEREST_BEARING_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${LOG_PATH}/log_interest_bearing.log</File>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} : %m%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/log_interest_bearing.%d{yyyy-MM-dd}</fileNamePattern>
-        </rollingPolicy>
-    </appender>
-
-    <logger name="INTEREST_BEARING_LOGGER" additivity="true" level="INFO">
-        <appender-ref ref="INTEREST_BEARING_INFO"/>
-    </logger>
-
-    <logger name="org.springframework" level="DEBUG"/>
-    <logger name="com.ibatis" level="DEBUG"/>
-    <logger name="com.ibatis.common.jdbc.SimpleDataSource" level="DEBUG"/>
-    <logger name="com.ibatis.common.jdbc.ScriptRunner" level="DEBUG"/>
-    <logger name="com.ibatis.sqlmap.engine.impl.SqlMapClientDelegate" level="DEBUG"/>
-    <logger name="java.sql.Connection" level="DEBUG"/>
-    <logger name="java.sql.Statement" level="DEBUG"/>
-    <logger name="java.sql.PreparedStatement" level="DEBUG"/>
-
-    <root level="INFO">
-        <appender-ref ref="FILEDEBUG"/>
-        <appender-ref ref="FILEINFO"/>
-        <appender-ref ref="FILEWARN"/>
-        <appender-ref ref="FILEERROR"/>
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT" />
     </root>
 </configuration>
