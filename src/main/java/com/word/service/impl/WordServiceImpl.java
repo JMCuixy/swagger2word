@@ -1,10 +1,14 @@
 package com.word.service.impl;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.word.dto.Request;
 import com.word.dto.Response;
 import com.word.dto.Table;
 import com.word.service.WordService;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -28,7 +32,21 @@ public class WordServiceImpl implements WordService {
 
     @Override
     public List<Table> tableList() {
-        Map<String, Object> map = restTemplate.getForObject(swaggerUrl, Map.class);
+        String json = restTemplate.getForObject(swaggerUrl, String.class);
+
+        Map<String, Object> map = new HashMap<>();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
+        mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+
+        try {
+            // convert JSON string to Map
+            map = mapper.readValue(json, new TypeReference<HashMap<String,Object>>(){});
+        } catch (Exception e) {
+            LoggerFactory.getLogger(WordService.class).error("parse error", e);
+        }
+
         List<Table> list = new LinkedList();
         //得到host，并添加上http 或 https
         String host = StringUtils.substringBefore(swaggerUrl, ":") + String.valueOf(map.get("host"));
