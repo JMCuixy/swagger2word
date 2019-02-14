@@ -1,15 +1,15 @@
-<h2>使用步骤：</h2>
+<h3>使用步骤：</h3>
 <p>
  1、修改resources目录下resources.properties文件的<strong> swaggerUrl </strong>为Swagger Json资源的url地址。<br/>
 2、服务启动后：访问 http://host(主机):port(端口)/getWord，etc：http://localhost:8080/getWord <br/>
 3、将生成的getWord文件，增加后缀名 getWord.doc 。
 </p>
 <p>----------------------------------</p>
-<h5> 版本： SwaggerToWord 1.0 （2018-01-18）</h5>
+<h3> 版本： SwaggerToWord 1.0 （2018-01-18）</h3>
 <p>简介：一个Swagger API 文档 转 Word 文档的工具项目</P>
 <p>备注：项目想法和说明可以参考：<a href='http://www.cnblogs.com/jmcui/p/8298823.html'>http://www.cnblogs.com/jmcui/p/8298823.html</a></P>
 <p>----------------------------------</p>
-<h5>版本：SwaggerToWord 1.1 (2018-02-11)</h5>
+<h3>版本：SwaggerToWord 1.1 (2018-02-11)</h3>
 <p>更新说明：</P>
  <h6>已解决：</h6>
  <ul>   
@@ -23,7 +23,7 @@
    <li>用户自定义的对象还没有适配。</li> 
  </ul>   
 <p>----------------------------------</p>
-<h5>版本：SwaggerToWord 1.2 (2018-06-21)</h5>
+<h3>版本：SwaggerToWord 1.2 (2018-06-21)</h3>
 <p>更新说明：</P>
 <p>
 1、引入了Spring的RestTemplate取代 HttpClients 以支持更多的Restful请求。<br/>
