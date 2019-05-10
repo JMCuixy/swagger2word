@@ -22,6 +22,7 @@ public class WordController {
     public String getJson(Model model){
         List<Table> list = tableService.tableList();
         model.addAttribute("table",list);
+        model.addAttribute("map", tableService.getModels());
         return "word";
     }
 }
