@@ -1,8 +1,8 @@
-<h5>使用步骤：</h5>
+<h5>使用步骤（Google Chrome）：</h5>
 <p>
- 1、修改resources目录下resources.properties文件的<strong> swaggerUrl </strong>为Swagger Json资源的url地址。<br/>
-2、服务启动后：访问 http://host(主机):port(端口)/getWord，etc：http://localhost:8080/getWord <br/>
-3、将生成的getWord文件，增加后缀名 getWord.doc 。
+1、修改 application.yml 文件的<strong> swagger.url </strong>为Swagger Json资源的url地址。<br/>
+2、服务启动后：访问 http://host(主机):port(端口)/toWord，etc：http://127.0.0.1:8080/toWord <br/>
+3、可以看到网页上生成的类似 word 文档的页面，右键另存为 xxx.doc 文件即可。
 </p>
 <p>----------------------------------</p>
 <h5> 版本： SwaggerToWord 1.0 （2018-01-18）</h5>
@@ -29,5 +29,12 @@
 1、引入了Spring的RestTemplate取代 HttpClients 以支持更多的Restful请求。<br/>
 2、命名规范以及增加异常处理，对于无法处理的HTTP请求返回空字符串。<br/>
 3、修改之前导入data.josn的方式，变成restTemplate.getForObject("SwaggerJson的url地址",Map.class);的动态获取方式。
+</p>
+<p>----------------------------------</p>
+<h5>版本：SwaggerToWord 1.3 (2019-06-12)</h5>
+<p>更新说明：</P>
+<p>
+1、Spring 框架向 SpringBoot 升级<br/>
+2、thymeleaf 取代 jsp模板 <br/>
 </p>
   

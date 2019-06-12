@@ -1,5 +1,6 @@
 package org.word.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,128 +20,121 @@ import java.util.*;
 /**
  * Created by XiuYin.Cui on 2018/1/12.
  */
-@Service
 @Slf4j
+@Service
 public class WordServiceImpl implements WordService {
 
     @Autowired
     private RestTemplate restTemplate;
+
     @Value("${swagger.url}")
     private String swaggerUrl;
 
     @Override
     public List<Table> tableList() {
-        String json = restTemplate.getForObject(swaggerUrl, String.class);
-
+        List<Table> result = new LinkedList();
+        String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
         Map<String, Object> map = new HashMap<>(16);
-
         try {
             // convert JSON string to Map
-            map = JsonUtils.readValue(json, HashMap.class);
+            map = JsonUtils.readValue(jsonStr, HashMap.class);
+            //得到host，并添加上http 或 https
+            String host = StringUtils.substringBefore(swaggerUrl, ":") + map.get("host");
+            //解析paths
+            Map<String, LinkedHashMap> paths = (LinkedHashMap) map.get("paths");
+            if (paths != null) {
+                Iterator<Map.Entry<String, LinkedHashMap>> it = paths.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry<String, LinkedHashMap> path = it.next();
+                    // 1.请求路径
+                    String url = path.getKey();
+                    // 2.请求方式，类似为 get,post,delete,put 这样
+                    String requestType = "";
+                    Map<String, LinkedHashMap> value = path.getValue();
+                    Set<String> requestTypes = value.keySet();
+                    for (String str : requestTypes) {
+                        requestType += str + ",";
+                    }
+                    Iterator<Map.Entry<String, LinkedHashMap>> it2 = value.entrySet().iterator();
+                    //不管有几种请求方式，都只解析第一种
+                    Map.Entry<String, LinkedHashMap> firstRequest = it2.next();
+                    Map<String, Object> content = firstRequest.getValue();
+                    // 4. 大标题（类说明）
+                    String title = String.valueOf(((List) content.get("tags")).get(0));
+                    // 5.小标题 （方法说明）
+                    String tag = String.valueOf(content.get("summary"));
+                    // 6.接口描述
+                    String description = String.valueOf(content.get("description"));
+                    // 7.请求参数格式，类似于 multipart/form-data
+                    String requestForm = "";
+                    List<String> consumes = (List) content.get("consumes");
+                    if (consumes != null && consumes.size() > 0) {
+                        for (String consume : consumes) {
+                            requestForm += consume + ",";
+                        }
+                    }
+                    // 8.返回参数格式，类似于 application/json
+                    String responseForm = "";
+                    List<String> produces = (List) content.get("produces");
+                    if (produces != null && produces.size() > 0) {
+                        for (String produce : produces) {
+                            responseForm += produce + ",";
+                        }
+                    }
+                    // 9. 请求体
+                    List<Request> requestList = new ArrayList<>();
+                    List parameters = (ArrayList) content.get("parameters");
+                    if (parameters != null && parameters.size() > 0) {
+                        for (int i = 0; i < parameters.size(); i++) {
+                            Request request = new Request();
+                            Map<String, Object> param = (LinkedHashMap) parameters.get(i);
+                            request.setName(String.valueOf(param.get("name")));
+                            request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
+                            request.setParamType(String.valueOf(param.get("in")));
+                            request.setRequire((Boolean) param.get("required"));
+                            request.setRemark(String.valueOf(param.get("description")));
+                            requestList.add(request);
+                        }
+                    }
+                    // 10.返回体
+                    List<Response> responseList = new ArrayList<>();
+                    Map<String, Object> responses = (LinkedHashMap) content.get("responses");
+                    Iterator<Map.Entry<String, Object>> it3 = responses.entrySet().iterator();
+                    while (it3.hasNext()) {
+                        Response response = new Response();
+                        Map.Entry<String, Object> entry = it3.next();
+                        // 状态码 200 201 401 403 404 这样
+                        response.setName(entry.getKey());
+                        LinkedHashMap<String, Object> statusCodeInfo = (LinkedHashMap) entry.getValue();
+                        response.setDescription(String.valueOf(statusCodeInfo.get("description")));
+                        response.setRemark(null);
+                        responseList.add(response);
+                    }
+
+                    // 模拟一次HTTP请求,封装请求体和返回体
+                    // 得到请求方式
+                    String restType = firstRequest.getKey();
+                    Map<String, Object> paramMap = ParamMap(requestList);
+                    String buildUrl = buildUrl(host + url, requestList);
+
+                    //封装Table
+                    Table table = new Table();
+                    table.setTitle(title);
+                    table.setUrl(url);
+                    table.setTag(tag);
+                    table.setDescription(description);
+                    table.setRequestForm(StringUtils.removeEnd(requestForm, ","));
+                    table.setResponseForm(StringUtils.removeEnd(responseForm, ","));
+                    table.setRequestType(StringUtils.removeEnd(requestType, ","));
+                    table.setRequestList(requestList);
+                    table.setResponseList(responseList);
+                    table.setRequestParam(JsonUtils.writeJsonStr(paramMap));
+                    table.setResponseParam(doRestRequest(restType, buildUrl, paramMap));
+                    result.add(table);
+                }
+            }
         } catch (Exception e) {
             log.error("parse error", e);
-        }
-        List<Table> result = new LinkedList();
-        //得到host，并添加上http 或 https
-        String host = StringUtils.substringBefore(swaggerUrl, ":") + map.get("host");
-        //解析paths
-        LinkedHashMap<String, LinkedHashMap> paths = (LinkedHashMap) map.get("paths");
-        if (paths != null) {
-            Iterator<Map.Entry<String, LinkedHashMap>> it = paths.entrySet().iterator();
-            while (it.hasNext()) {
-                Table table = new Table();
-                List<Request> requestList = new LinkedList<>();
-                List<Response> responseList = new LinkedList<>();
-                // 请求参数格式，类似于 multipart/form-data
-                String requestForm = "";
-                // 请求参数格式，类似于 multipart/form-data
-                String responseForm = "";
-                // 请求方式，类似为 get,post,delete,put 这样
-                String requestType = "";
-                String url; // 请求路径
-                String title; // 大标题（类说明）
-                String tag; // 小标题 （方法说明）
-                String description; //接口描述
-
-                Map.Entry<String, LinkedHashMap> path = it.next();
-                url = path.getKey();
-
-                LinkedHashMap<String, LinkedHashMap> value = path.getValue();
-                Set<String> requestTypes = value.keySet();
-                for (String str : requestTypes) {
-                    requestType += str + ",";
-                }
-
-                Iterator<Map.Entry<String, LinkedHashMap>> it2 = value.entrySet().iterator();
-                // 不管有几种请求方式，都只解析第一种
-                Map.Entry<String, LinkedHashMap> firstRequestType = it2.next();
-                LinkedHashMap content = firstRequestType.getValue();
-                title = String.valueOf(((List) content.get("tags")).get(0));
-                description = String.valueOf(content.get("description"));
-                List<String> consumes = (List) content.get("consumes");
-                if (consumes != null && consumes.size() > 0) {
-                    for (String consume : consumes) {
-                        requestForm += consume + ",";
-                    }
-                }
-                List<String> produces = (List) content.get("produces");
-                if (produces != null && produces.size() > 0) {
-                    for (String produce : produces) {
-                        responseForm += produce + ",";
-                    }
-                }
-
-                tag = String.valueOf(content.get("summary"));
-                //请求体
-                List parameters = (ArrayList) content.get("parameters");
-                if (parameters != null && parameters.size() > 0) {
-                    for (int i = 0; i < parameters.size(); i++) {
-                        Request request = new Request();
-                        LinkedHashMap<String, Object> param = (LinkedHashMap) parameters.get(i);
-                        request.setName(String.valueOf(param.get("name")));
-                        request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
-                        request.setParamType(String.valueOf(param.get("in")));
-                        request.setRequire((Boolean) param.get("required"));
-                        request.setRemark(String.valueOf(param.get("description")));
-                        requestList.add(request);
-                    }
-                }
-                //返回体
-                LinkedHashMap<String, Object> responses = (LinkedHashMap) content.get("responses");
-                Iterator<Map.Entry<String, Object>> it3 = responses.entrySet().iterator();
-                while (it3.hasNext()) {
-                    Response response = new Response();
-                    Map.Entry<String, Object> entry = it3.next();
-                    // 状态码 200 201 401 403 404 这样
-                    String statusCode = entry.getKey();
-                    LinkedHashMap<String, Object> statusCodeInfo = (LinkedHashMap) entry.getValue();
-                    String statusDescription = (String) statusCodeInfo.get("description");
-                    response.setName(statusCode);
-                    response.setDescription(statusDescription);
-                    response.setRemark(null);
-                    responseList.add(response);
-                }
-
-                // 模拟一次HTTP请求,封装请求体和返回体
-                // 得到请求方式
-                String restType = firstRequestType.getKey();
-                Map<String, Object> paramMap = ParamMap(requestList);
-                String buildUrl = buildUrl(host + url, requestList);
-
-                //封装Table
-                table.setTitle(title);
-                table.setUrl(url);
-                table.setTag(tag);
-                table.setDescription(description);
-                table.setRequestForm(StringUtils.removeEnd(requestForm, ","));
-                table.setResponseForm(StringUtils.removeEnd(responseForm, ","));
-                table.setRequestType(StringUtils.removeEnd(requestType, ","));
-                table.setRequestList(requestList);
-                table.setResponseList(responseList);
-                table.setRequestParam(String.valueOf(paramMap));
-                table.setResponseParam(doRestRequest(restType, buildUrl, paramMap));
-                result.add(table);
-            }
         }
         return result;
     }
@@ -175,7 +169,7 @@ public class WordServiceImpl implements WordService {
      * @param paramMap 参数
      * @return
      */
-    private String doRestRequest(String restType, String url, Map<String, Object> paramMap) {
+    private String doRestRequest(String restType, String url, Map<String, Object> paramMap) throws JsonProcessingException {
         Object object = null;
         try {
             switch (restType) {
@@ -211,7 +205,7 @@ public class WordServiceImpl implements WordService {
             // ex.printStackTrace();
             return "";
         }
-        return String.valueOf(object);
+        return JsonUtils.writeJsonStr(object);
     }
 
     /**

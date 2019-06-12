@@ -18,6 +18,12 @@ public class WordController {
     @Autowired
     private WordService tableService;
 
+    /**
+     * @param model
+     * @return
+     * @see #toWord(Model)
+     */
+    @Deprecated
     @RequestMapping("/getWord")
     public String getWord(Model model) {
         List<Table> tables = tableService.tableList();
