@@ -7,6 +7,7 @@ import lombok.Data;
  */
 @Data
 public class Response {
+
     /**
      * 返回参数
      */
@@ -18,7 +19,7 @@ public class Response {
     private String name;
 
     /**
-     * 说明
+     * 备注
      */
     private String remark;
 }

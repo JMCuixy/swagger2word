@@ -32,12 +32,11 @@ public class WordServiceImpl implements WordService {
 
     @Override
     public List<Table> tableList() {
-        List<Table> result = new LinkedList();
-        String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
-        Map<String, Object> map = new HashMap<>(16);
+        List<Table> result = new ArrayList<>();
         try {
+            String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
             // convert JSON string to Map
-            map = JsonUtils.readValue(jsonStr, HashMap.class);
+            Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
             //得到host，并添加上http 或 https
             String host = StringUtils.substringBefore(swaggerUrl, ":") + map.get("host");
             //解析paths
@@ -83,11 +82,11 @@ public class WordServiceImpl implements WordService {
                     }
                     // 9. 请求体
                     List<Request> requestList = new ArrayList<>();
-                    List parameters = (ArrayList) content.get("parameters");
+                    List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
                     if (parameters != null && parameters.size() > 0) {
                         for (int i = 0; i < parameters.size(); i++) {
                             Request request = new Request();
-                            Map<String, Object> param = (LinkedHashMap) parameters.get(i);
+                            Map<String, Object> param = parameters.get(i);
                             request.setName(String.valueOf(param.get("name")));
                             request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
                             request.setParamType(String.valueOf(param.get("in")));
@@ -107,7 +106,7 @@ public class WordServiceImpl implements WordService {
                         response.setName(entry.getKey());
                         LinkedHashMap<String, Object> statusCodeInfo = (LinkedHashMap) entry.getValue();
                         response.setDescription(String.valueOf(statusCodeInfo.get("description")));
-                        response.setRemark(null);
+                        response.setRemark(String.valueOf(statusCodeInfo.get("description")));
                         responseList.add(response);
                     }
 
@@ -170,7 +169,7 @@ public class WordServiceImpl implements WordService {
      * @return
      */
     private String doRestRequest(String restType, String url, Map<String, Object> paramMap) throws JsonProcessingException {
-        Object object = null;
+        Object object = new Object();
         try {
             switch (restType) {
                 case "get":
