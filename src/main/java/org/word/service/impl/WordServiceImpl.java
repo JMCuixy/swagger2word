@@ -30,6 +30,8 @@ public class WordServiceImpl implements WordService {
     @Value("${swagger.url}")
     private String swaggerUrl;
 
+    private static final String SUBSTR = "://";
+
     @Override
     public List<Table> tableList() {
         List<Table> result = new ArrayList<>();
@@ -38,7 +40,7 @@ public class WordServiceImpl implements WordService {
             // convert JSON string to Map
             Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
             //得到host，并添加上http 或 https
-            String host = StringUtils.substringBefore(swaggerUrl, ":") + map.get("host");
+            String host = StringUtils.substringBeforeLast(swaggerUrl, SUBSTR) + SUBSTR + map.get("host");
             //解析paths
             Map<String, LinkedHashMap> paths = (LinkedHashMap) map.get("paths");
             if (paths != null) {
@@ -127,7 +129,7 @@ public class WordServiceImpl implements WordService {
                     table.setRequestType(StringUtils.removeEnd(requestType, ","));
                     table.setRequestList(requestList);
                     table.setResponseList(responseList);
-                    table.setRequestParam(JsonUtils.writeJsonStr(paramMap));
+                    table.setRequestParam(paramMap.toString());
                     table.setResponseParam(doRestRequest(restType, buildUrl, paramMap));
                     result.add(table);
                 }
@@ -201,7 +203,7 @@ public class WordServiceImpl implements WordService {
             }
         } catch (Exception ex) {
             // 无法使用 restTemplate 发送的请求，返回""
-            // ex.printStackTrace();
+            //ex.printStackTrace();
             return "";
         }
         return JsonUtils.writeJsonStr(object);

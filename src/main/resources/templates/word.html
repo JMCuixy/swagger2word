@@ -63,7 +63,8 @@
                 <td th:text="${request.name}"></td>
                 <td th:text="${request.type}"></td>
                 <td th:text="${request.paramType}"></td>
-                <td th:if="${request.require}" th:text="Y">N</td>
+                <td th:if="${request.require}" th:text="Y"></td>
+                <td th:if="${!request.require}" th:text="N"></td>
                 <td th:text="${request.remark}"></td>
             </tr>
 
