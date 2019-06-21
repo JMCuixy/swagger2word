@@ -39,8 +39,8 @@ public class WordServiceImpl implements WordService {
             String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
             // convert JSON string to Map
             Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
-            //得到host，并添加上http 或 https
-            String host = StringUtils.substringBeforeLast(swaggerUrl, SUBSTR) + SUBSTR + map.get("host");
+            //得到 host 和 basePath，拼接访问路径
+            String host = StringUtils.substringBeforeLast(swaggerUrl, SUBSTR) + SUBSTR + map.get("host") + map.get("basePath");
             //解析paths
             Map<String, LinkedHashMap> paths = (LinkedHashMap) map.get("paths");
             if (paths != null) {
@@ -115,7 +115,7 @@ public class WordServiceImpl implements WordService {
                     // 模拟一次HTTP请求,封装请求体和返回体
                     // 得到请求方式
                     String restType = firstRequest.getKey();
-                    Map<String, Object> paramMap = ParamMap(requestList);
+                    Map<String, Object> paramMap = buildParamMap(requestList);
                     String buildUrl = buildUrl(host + url, requestList);
 
                     //封装Table
@@ -178,20 +178,20 @@ public class WordServiceImpl implements WordService {
                     object = restTemplate.getForObject(url, Object.class, paramMap);
                     break;
                 case "post":
-                    object = restTemplate.postForObject(url, null, Object.class, paramMap);
+                    object = restTemplate.postForObject(url, paramMap, Object.class);
                     break;
                 case "put":
                     restTemplate.put(url, null, paramMap);
                     break;
                 case "head":
                     HttpHeaders httpHeaders = restTemplate.headForHeaders(url, paramMap);
-                    return String.valueOf(httpHeaders);
+                    return JsonUtils.writeJsonStr(httpHeaders);
                 case "delete":
                     restTemplate.delete(url, paramMap);
                     break;
                 case "options":
-                    Set<HttpMethod> httpMethods = restTemplate.optionsForAllow(url, paramMap);
-                    return String.valueOf(httpMethods);
+                    Set<HttpMethod> httpMethodSet = restTemplate.optionsForAllow(url, paramMap);
+                    return JsonUtils.writeJsonStr(httpMethodSet);
                 case "patch":
                     object = restTemplate.execute(url, HttpMethod.PATCH, null, null, paramMap);
                     break;
@@ -203,7 +203,7 @@ public class WordServiceImpl implements WordService {
             }
         } catch (Exception ex) {
             // 无法使用 restTemplate 发送的请求，返回""
-            //ex.printStackTrace();
+            // ex.printStackTrace();
             return "";
         }
         return JsonUtils.writeJsonStr(object);
@@ -215,7 +215,7 @@ public class WordServiceImpl implements WordService {
      * @param list
      * @return
      */
-    private Map<String, Object> ParamMap(List<Request> list) {
+    private Map<String, Object> buildParamMap(List<Request> list) {
         Map<String, Object> map = new HashMap<>(8);
         if (list != null && list.size() > 0) {
             for (Request request : list) {
