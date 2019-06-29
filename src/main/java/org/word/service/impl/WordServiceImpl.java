@@ -1,12 +1,18 @@
 package org.word.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.word.dto.Request;
@@ -31,6 +37,8 @@ public class WordServiceImpl implements WordService {
     private String swaggerUrl;
 
     private static final String SUBSTR = "://";
+    private static final String LEFT_BRACKETS = "{";
+    private static final String RIGHT_BRACKETS = "}";
 
     @Override
     public List<Table> tableList() {
@@ -130,7 +138,7 @@ public class WordServiceImpl implements WordService {
                     table.setRequestList(requestList);
                     table.setResponseList(responseList);
                     table.setRequestParam(paramMap.toString());
-                    table.setResponseParam(doRestRequest(restType, buildUrl, paramMap));
+                    table.setResponseParam(doRestRequest(restType, buildUrl, paramMap, url.contains(LEFT_BRACKETS)));
                     result.add(table);
                 }
             }
@@ -148,15 +156,24 @@ public class WordServiceImpl implements WordService {
      * @return etc:http://localhost:8080/rest/delete?uuid={uuid}
      */
     private String buildUrl(String url, List<Request> requestList) {
-        String param = "";
+        // 针对 pathParams 的参数做额外处理
+        if (url.contains(LEFT_BRACKETS) && url.contains(RIGHT_BRACKETS)) {
+            String before = StringUtils.substringBefore(url, LEFT_BRACKETS);
+            String after = StringUtils.substringAfter(url, RIGHT_BRACKETS);
+            return before + 0 + after;
+        }
+        StringBuffer buffer = new StringBuffer();
         if (requestList != null && requestList.size() > 0) {
             for (Request request : requestList) {
                 String name = request.getName();
-                param += name + "={" + name + "}&";
+                buffer.append(name)
+                        .append("={")
+                        .append(name)
+                        .append("}&");
             }
         }
-        if (StringUtils.isNotEmpty(param)) {
-            url += "?" + StringUtils.removeEnd(param, "&");
+        if (StringUtils.isNotEmpty(buffer.toString())) {
+            url += "?" + StringUtils.removeEnd(buffer.toString(), "&");
         }
         return url;
 
@@ -165,23 +182,35 @@ public class WordServiceImpl implements WordService {
     /**
      * 发送一个 Restful 请求
      *
-     * @param restType "get", "head", "post", "put", "delete", "options", "patch"
-     * @param url      资源地址
-     * @param paramMap 参数
+     * @param restType   "get", "head", "post", "put", "delete", "options", "patch"
+     * @param url        资源地址
+     * @param paramMap   参数
+     * @param pathParams 是否是 pathParams 传参数方式
      * @return
      */
-    private String doRestRequest(String restType, String url, Map<String, Object> paramMap) throws JsonProcessingException {
+    private String doRestRequest(String restType, String url, Map<String, Object> paramMap, boolean pathParams) {
         Object object = new Object();
         try {
+            if (pathParams) {
+                CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+                HttpGet httpGet = new HttpGet(url);
+                httpGet.setHeader("accept", "application/json");
+                CloseableHttpResponse execute = httpClient.execute(httpGet);
+                return EntityUtils.toString(execute.getEntity());
+            }
             switch (restType) {
                 case "get":
                     object = restTemplate.getForObject(url, Object.class, paramMap);
                     break;
                 case "post":
-                    object = restTemplate.postForObject(url, paramMap, Object.class);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_JSON);
+                    headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+                    HttpEntity request = new HttpEntity("{}", headers);
+                    object = restTemplate.postForObject(url, request, Object.class, paramMap);
                     break;
                 case "put":
-                    restTemplate.put(url, null, paramMap);
+                    restTemplate.put(url, paramMap, paramMap);
                     break;
                 case "head":
                     HttpHeaders httpHeaders = restTemplate.headForHeaders(url, paramMap);
@@ -206,7 +235,7 @@ public class WordServiceImpl implements WordService {
             // ex.printStackTrace();
             return "";
         }
-        return JsonUtils.writeJsonStr(object);
+        return object == null ? "" : object.toString();
     }
 
     /**
@@ -233,6 +262,10 @@ public class WordServiceImpl implements WordService {
                         break;
                     case "boolean":
                         map.put(name, true);
+                        break;
+                    case "body":
+                        map.put(name, new HashMap<>(2));
+                        break;
                     default:
                         map.put(name, null);
                         break;
