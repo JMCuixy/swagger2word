@@ -75,7 +75,7 @@ public class WordServiceImpl implements WordService {
                     // 5.小标题 （方法说明）
                     String tag = String.valueOf(content.get("summary"));
                     // 6.接口描述
-                    String description = String.valueOf(content.get("description"));
+                    String description = String.valueOf(content.get("summary"));
                     // 7.请求参数格式，类似于 multipart/form-data
                     String requestForm = "";
                     List<String> consumes = (List) content.get("consumes");
@@ -148,11 +148,24 @@ public class WordServiceImpl implements WordService {
                             ((Map<String, Object>)responses.get("200")).get("schema")!=null &&
                             ((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("$ref")!=null
                     ){
+                        //非数组类型返回值
                         String ref=(String)((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("$ref");
                         //解析swagger2 ref链接
                         JSONObject jsonObject=parseRef(ref,map);
                         table.setResponseParam(jsonObject.toJSONString());
 
+                    }else if(responses.get("200")!=null &&
+                            ((Map<String, Object>)responses.get("200")).get("schema")!=null &&
+                            ((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("items")!=null &&
+                            ((Map<String, Object>)((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("items")).get("$ref")!=null
+                    ){
+                        //数组类型返回值
+                        String ref=(String)((Map<String, Object>)((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("items")).get("$ref");
+                        //解析swagger2 ref链接
+                        JSONObject jsonObject=parseRef(ref,map);
+                        JSONArray jsonArray=new JSONArray();
+                        jsonArray.add(jsonObject);
+                        table.setResponseParam(jsonArray.toJSONString());
                     }
                     result.add(table);
                 }
