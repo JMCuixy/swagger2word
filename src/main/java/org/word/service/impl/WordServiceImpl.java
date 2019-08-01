@@ -1,5 +1,7 @@
 package org.word.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -73,7 +75,7 @@ public class WordServiceImpl implements WordService {
                     // 5.小标题 （方法说明）
                     String tag = String.valueOf(content.get("summary"));
                     // 6.接口描述
-                    String description = String.valueOf(content.get("description"));
+                    String description = String.valueOf(content.get("summary"));
                     // 7.请求参数格式，类似于 multipart/form-data
                     String requestForm = "";
                     List<String> consumes = (List) content.get("consumes");
@@ -97,6 +99,8 @@ public class WordServiceImpl implements WordService {
                         for (int i = 0; i < parameters.size(); i++) {
                             Request request = new Request();
                             Map<String, Object> param = parameters.get(i);
+
+
                             request.setName(String.valueOf(param.get("name")));
                             request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
                             request.setParamType(String.valueOf(param.get("in")));
@@ -109,6 +113,7 @@ public class WordServiceImpl implements WordService {
                     List<Response> responseList = new ArrayList<>();
                     Map<String, Object> responses = (LinkedHashMap) content.get("responses");
                     Iterator<Map.Entry<String, Object>> it3 = responses.entrySet().iterator();
+
                     while (it3.hasNext()) {
                         Response response = new Response();
                         Map.Entry<String, Object> entry = it3.next();
@@ -138,7 +143,30 @@ public class WordServiceImpl implements WordService {
                     table.setRequestList(requestList);
                     table.setResponseList(responseList);
                     table.setRequestParam(paramMap.toString());
-                    table.setResponseParam(doRestRequest(restType, buildUrl, paramMap, url.contains(LEFT_BRACKETS)));
+                    //取出来状态是200时的返回值
+                    if(responses.get("200")!=null &&
+                            ((Map<String, Object>)responses.get("200")).get("schema")!=null &&
+                            ((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("$ref")!=null
+                    ){
+                        //非数组类型返回值
+                        String ref=(String)((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("$ref");
+                        //解析swagger2 ref链接
+                        JSONObject jsonObject=parseRef(ref,map);
+                        table.setResponseParam(jsonObject.toJSONString());
+
+                    }else if(responses.get("200")!=null &&
+                            ((Map<String, Object>)responses.get("200")).get("schema")!=null &&
+                            ((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("items")!=null &&
+                            ((Map<String, Object>)((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("items")).get("$ref")!=null
+                    ){
+                        //数组类型返回值
+                        String ref=(String)((Map<String, Object>)((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("items")).get("$ref");
+                        //解析swagger2 ref链接
+                        JSONObject jsonObject=parseRef(ref,map);
+                        JSONArray jsonArray=new JSONArray();
+                        jsonArray.add(jsonObject);
+                        table.setResponseParam(jsonArray.toJSONString());
+                    }
                     result.add(table);
                 }
             }
@@ -146,6 +174,60 @@ public class WordServiceImpl implements WordService {
             log.error("parse error", e);
         }
         return result;
+    }
+
+
+    /**
+     * 从map中解析出指定的ref
+     * @author fpzhan
+     * @param ref ref链接 例如："#/definitions/PageInfoBT«Customer»"
+     * @param map 是整个swagger json转成map对象
+     * @return
+     */
+    private JSONObject parseRef(String ref, Map<String, Object> map){
+        JSONObject jsonObject=new JSONObject();
+        if(ref.startsWith("#")){
+            String [] refs=ref.split("/");
+            Map<String,Object> tmpMap=map;
+            //取出ref最后一个参数 start
+            for(String tmp:refs){
+                if(!tmp.equals("#")){
+                    tmpMap=(Map<String,Object>)tmpMap.get(tmp);
+                }
+            }
+            //取出ref最后一个参数 end
+            //取出参数
+            Map<String,Object> properties=(Map<String,Object>)tmpMap.get("properties");
+            if(properties==null) return jsonObject;
+            Set<String> keys=properties.keySet();
+            //遍历key
+            for(String key:keys){
+                if("array".equals(((Map<String,Object>)properties.get(key)).get("type"))){
+                    //数组的处理方式
+                    String sonRef=(String)((Map<String,Object>)((Map<String,Object>)properties.get(key)).get("items")).get("$ref");
+                    JSONObject object=parseRef(sonRef,map);
+                    JSONArray jsonArray=new JSONArray();
+                    jsonArray.add(object);
+                    jsonObject.put(key, jsonArray);
+                }else if(((Map<String,Object>)properties.get(key)).get("$ref")!=null) {
+                    //对象的处理方式
+                    String sonRef = (String) ((Map<String, Object>) properties.get(key)).get("$ref");
+                    JSONObject object = parseRef(sonRef, map);
+                    jsonObject.put(key, object);
+                }else{
+                    //其他参数的处理方式，string、int
+                    String str="";
+                    if(((Map<String,Object>)properties.get(key)).get("description")!=null){
+                        str=str+((Map<String,Object>)properties.get(key)).get("description");
+                    }
+                    if(((Map<String,Object>)properties.get(key)).get("format")!=null){
+                        str=str+"  格式为("+((Map<String,Object>)properties.get(key)).get("format")+")";
+                    }
+                    jsonObject.put(key,str);
+                }
+            }
+        }
+        return jsonObject;
     }
 
     /**
