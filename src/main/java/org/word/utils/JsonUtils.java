@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,6 +53,14 @@ public class JsonUtils {
 
     public static String writeJsonStr(Object obj) throws JsonProcessingException {
         return objectMapper.writeValueAsString(obj);
+    }
+
+    public static ObjectNode createObjectNode() {
+        return objectMapper.createObjectNode();
+    }
+
+    public static ArrayNode createArrayNode() {
+        return objectMapper.createArrayNode();
     }
 
 }

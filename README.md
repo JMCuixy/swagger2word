@@ -37,4 +37,13 @@
 1、Spring 框架向 SpringBoot 升级<br/>
 2、thymeleaf 取代 jsp模板 <br/>
 </p>
+<p>----------------------------------</p>
+<h5>版本：SwaggerToWord 1.4 (2019-08-02)</h5>
+<p>更新说明：</P>
+<p>
+1、取消 HttpClient 的请求方式去获得返回值，改由从 Swagger Json 文件中直接读取<br/>
+2、针对 application/json 请求方式的入参做渲染 <br/>
+3、对于文字过多导致 HTML table 变形做适配<br/>
+4、真诚感谢<a href="https://github.com/fupengzhan"> fupengzhan </a> 的代码贡献 <br/>
+</p>
   

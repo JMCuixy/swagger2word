@@ -1,21 +1,15 @@
 package org.word.service.impl;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.cglib.beans.BeanMap;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 import org.word.dto.Request;
 import org.word.dto.Response;
@@ -38,10 +32,6 @@ public class WordServiceImpl implements WordService {
     @Value("${swagger.url}")
     private String swaggerUrl;
 
-    private static final String SUBSTR = "://";
-    private static final String LEFT_BRACKETS = "{";
-    private static final String RIGHT_BRACKETS = "}";
-
     @Override
     public List<Table> tableList() {
         List<Table> result = new ArrayList<>();
@@ -49,8 +39,6 @@ public class WordServiceImpl implements WordService {
             String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
             // convert JSON string to Map
             Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
-            //得到 host 和 basePath，拼接访问路径
-            String host = StringUtils.substringBeforeLast(swaggerUrl, SUBSTR) + SUBSTR + map.get("host") + map.get("basePath");
             //解析paths
             Map<String, LinkedHashMap> paths = (LinkedHashMap) map.get("paths");
             if (paths != null) {
@@ -95,15 +83,24 @@ public class WordServiceImpl implements WordService {
                     // 9. 请求体
                     List<Request> requestList = new ArrayList<>();
                     List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
-                    if (parameters != null && parameters.size() > 0) {
-                        for (int i = 0; i < parameters.size(); i++) {
+                    if (!CollectionUtils.isEmpty(parameters)) {
+                        for (Map<String, Object> param : parameters) {
                             Request request = new Request();
-                            Map<String, Object> param = parameters.get(i);
-
-
                             request.setName(String.valueOf(param.get("name")));
-                            request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
-                            request.setParamType(String.valueOf(param.get("in")));
+                            Object in = param.get("in");
+                            if (in != null && "body".equals(in)) {
+                                request.setType(String.valueOf(in));
+                                Map<String, Object> schema = (Map) param.get("schema");
+                                Object ref = schema.get("$ref");
+                                // 数组情况另外处理
+                                if (schema.get("type") != null && "array".equals(schema.get("type"))) {
+                                    ref = ((Map) schema.get("items")).get("$ref");
+                                }
+                                request.setParamType(ref == null ? "{}" : ref.toString());
+                            } else {
+                                request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
+                                request.setParamType(String.valueOf(in));
+                            }
                             request.setRequire((Boolean) param.get("required"));
                             request.setRemark(String.valueOf(param.get("description")));
                             requestList.add(request);
@@ -125,12 +122,6 @@ public class WordServiceImpl implements WordService {
                         responseList.add(response);
                     }
 
-                    // 模拟一次HTTP请求,封装请求体和返回体
-                    // 得到请求方式
-                    String restType = firstRequest.getKey();
-                    Map<String, Object> paramMap = buildParamMap(requestList);
-                    String buildUrl = buildUrl(host + url, requestList);
-
                     //封装Table
                     Table table = new Table();
                     table.setTitle(title);
@@ -142,32 +133,35 @@ public class WordServiceImpl implements WordService {
                     table.setRequestType(StringUtils.removeEnd(requestType, ","));
                     table.setRequestList(requestList);
                     table.setResponseList(responseList);
-                    table.setRequestParam(paramMap.toString());
-                    //取出来状态是200时的返回值
-                    if(responses.get("200")!=null &&
-                            ((Map<String, Object>)responses.get("200")).get("schema")!=null &&
-                            ((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("$ref")!=null
-                    ){
-                        //非数组类型返回值
-                        String ref=(String)((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("$ref");
-                        //解析swagger2 ref链接
-                        JSONObject jsonObject=parseRef(ref,map);
-                        table.setResponseParam(jsonObject.toJSONString());
-
-                    }else if(responses.get("200")!=null &&
-                            ((Map<String, Object>)responses.get("200")).get("schema")!=null &&
-                            ((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("items")!=null &&
-                            ((Map<String, Object>)((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("items")).get("$ref")!=null
-                    ){
-                        //数组类型返回值
-                        String ref=(String)((Map<String, Object>)((Map<String, Object>)((Map<String, Object>)responses.get("200")).get("schema")).get("items")).get("$ref");
-                        //解析swagger2 ref链接
-                        JSONObject jsonObject=parseRef(ref,map);
-                        JSONArray jsonArray=new JSONArray();
-                        jsonArray.add(jsonObject);
-                        table.setResponseParam(jsonArray.toJSONString());
+                    table.setRequestParam(JsonUtils.writeJsonStr(buildParamMap(requestList, map)));
+                    // 取出来状态是200时的返回值
+                    Object obj = responses.get("200");
+                    if (obj == null) {
+                        table.setResponseParam("");
+                        result.add(table);
+                        continue;
                     }
-                    result.add(table);
+                    Object schema = ((Map) obj).get("schema");
+                    if (((Map) schema).get("$ref") != null) {
+                        //非数组类型返回值
+                        String ref = (String) ((Map) schema).get("$ref");
+                        //解析swagger2 ref链接
+                        ObjectNode objectNode = parseRef(ref, map);
+                        table.setResponseParam(objectNode.toString());
+                        result.add(table);
+                        continue;
+                    }
+                    Object items = ((Map) schema).get("items");
+                    if (items != null && ((Map) items).get("$ref") != null) {
+                        //数组类型返回值
+                        String ref = (String) ((Map) items).get("$ref");
+                        //解析swagger2 ref链接
+                        ObjectNode objectNode = parseRef(ref, map);
+                        ArrayNode arrayNode = JsonUtils.createArrayNode();
+                        arrayNode.add(objectNode);
+                        table.setResponseParam(arrayNode.toString());
+                        result.add(table);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -179,181 +173,97 @@ public class WordServiceImpl implements WordService {
 
     /**
      * 从map中解析出指定的ref
-     * @author fpzhan
+     *
      * @param ref ref链接 例如："#/definitions/PageInfoBT«Customer»"
      * @param map 是整个swagger json转成map对象
      * @return
+     * @author fpzhan
      */
-    private JSONObject parseRef(String ref, Map<String, Object> map){
-        JSONObject jsonObject=new JSONObject();
-        if(ref.startsWith("#")){
-            String [] refs=ref.split("/");
-            Map<String,Object> tmpMap=map;
+    private ObjectNode parseRef(String ref, Map<String, Object> map) {
+        ObjectNode objectNode = JsonUtils.createObjectNode();
+        if (StringUtils.isNotEmpty(ref) && ref.startsWith("#")) {
+            String[] refs = ref.split("/");
+            Map<String, Object> tmpMap = map;
             //取出ref最后一个参数 start
-            for(String tmp:refs){
-                if(!tmp.equals("#")){
-                    tmpMap=(Map<String,Object>)tmpMap.get(tmp);
+            for (String tmp : refs) {
+                if (!"#".equals(tmp)) {
+                    tmpMap = (Map<String, Object>) tmpMap.get(tmp);
                 }
             }
             //取出ref最后一个参数 end
             //取出参数
-            Map<String,Object> properties=(Map<String,Object>)tmpMap.get("properties");
-            if(properties==null) return jsonObject;
-            Set<String> keys=properties.keySet();
+            Map<String, Object> properties = (Map<String, Object>) tmpMap.get("properties");
+            if (properties == null) {
+                return objectNode;
+            }
+            Set<String> keys = properties.keySet();
             //遍历key
-            for(String key:keys){
-                if("array".equals(((Map<String,Object>)properties.get(key)).get("type"))){
+            for (String key : keys) {
+                Map<String, Object> keyMap = (Map) properties.get(key);
+                if ("array".equals(keyMap.get("type"))) {
                     //数组的处理方式
-                    String sonRef=(String)((Map<String,Object>)((Map<String,Object>)properties.get(key)).get("items")).get("$ref");
-                    JSONObject object=parseRef(sonRef,map);
-                    JSONArray jsonArray=new JSONArray();
-                    jsonArray.add(object);
-                    jsonObject.put(key, jsonArray);
-                }else if(((Map<String,Object>)properties.get(key)).get("$ref")!=null) {
+                    String sonRef = (String) ((Map) keyMap.get("items")).get("$ref");
+                    JsonNode jsonNode = parseRef(sonRef, map);
+                    ArrayNode arrayNode = JsonUtils.createArrayNode();
+                    arrayNode.add(jsonNode);
+                    objectNode.set(key, arrayNode);
+                } else if (keyMap.get("$ref") != null) {
                     //对象的处理方式
-                    String sonRef = (String) ((Map<String, Object>) properties.get(key)).get("$ref");
-                    JSONObject object = parseRef(sonRef, map);
-                    jsonObject.put(key, object);
-                }else{
+                    String sonRef = (String) keyMap.get("$ref");
+                    ObjectNode object = parseRef(sonRef, map);
+                    objectNode.set(key, object);
+                } else {
                     //其他参数的处理方式，string、int
-                    String str="";
-                    if(((Map<String,Object>)properties.get(key)).get("description")!=null){
-                        str=str+((Map<String,Object>)properties.get(key)).get("description");
+                    String str = "";
+                    if (keyMap.get("description") != null) {
+                        str = str + keyMap.get("description");
                     }
-                    if(((Map<String,Object>)properties.get(key)).get("format")!=null){
-                        str=str+"  格式为("+((Map<String,Object>)properties.get(key)).get("format")+")";
+                    if (keyMap.get("format") != null) {
+                        str = str + String.format("格式为(%s)", keyMap.get("format"));
                     }
-                    jsonObject.put(key,str);
+                    objectNode.put(key, str);
                 }
             }
         }
-        return jsonObject;
-    }
-
-    /**
-     * 重新构建url
-     *
-     * @param url
-     * @param requestList
-     * @return etc:http://localhost:8080/rest/delete?uuid={uuid}
-     */
-    private String buildUrl(String url, List<Request> requestList) {
-        // 针对 pathParams 的参数做额外处理
-        if (url.contains(LEFT_BRACKETS) && url.contains(RIGHT_BRACKETS)) {
-            String before = StringUtils.substringBefore(url, LEFT_BRACKETS);
-            String after = StringUtils.substringAfter(url, RIGHT_BRACKETS);
-            return before + 0 + after;
-        }
-        StringBuffer buffer = new StringBuffer();
-        if (requestList != null && requestList.size() > 0) {
-            for (Request request : requestList) {
-                String name = request.getName();
-                buffer.append(name)
-                        .append("={")
-                        .append(name)
-                        .append("}&");
-            }
-        }
-        if (StringUtils.isNotEmpty(buffer.toString())) {
-            url += "?" + StringUtils.removeEnd(buffer.toString(), "&");
-        }
-        return url;
-
-    }
-
-    /**
-     * 发送一个 Restful 请求
-     *
-     * @param restType   "get", "head", "post", "put", "delete", "options", "patch"
-     * @param url        资源地址
-     * @param paramMap   参数
-     * @param pathParams 是否是 pathParams 传参数方式
-     * @return
-     */
-    private String doRestRequest(String restType, String url, Map<String, Object> paramMap, boolean pathParams) {
-        Object object = new Object();
-        try {
-            if (pathParams) {
-                CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-                HttpGet httpGet = new HttpGet(url);
-                httpGet.setHeader("accept", "application/json");
-                CloseableHttpResponse execute = httpClient.execute(httpGet);
-                return EntityUtils.toString(execute.getEntity());
-            }
-            switch (restType) {
-                case "get":
-                    object = restTemplate.getForObject(url, Object.class, paramMap);
-                    break;
-                case "post":
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.setContentType(MediaType.APPLICATION_JSON);
-                    headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-                    HttpEntity request = new HttpEntity("{}", headers);
-                    object = restTemplate.postForObject(url, request, Object.class, paramMap);
-                    break;
-                case "put":
-                    restTemplate.put(url, paramMap, paramMap);
-                    break;
-                case "head":
-                    HttpHeaders httpHeaders = restTemplate.headForHeaders(url, paramMap);
-                    return JsonUtils.writeJsonStr(httpHeaders);
-                case "delete":
-                    restTemplate.delete(url, paramMap);
-                    break;
-                case "options":
-                    Set<HttpMethod> httpMethodSet = restTemplate.optionsForAllow(url, paramMap);
-                    return JsonUtils.writeJsonStr(httpMethodSet);
-                case "patch":
-                    object = restTemplate.execute(url, HttpMethod.PATCH, null, null, paramMap);
-                    break;
-                case "trace":
-                    object = restTemplate.execute(url, HttpMethod.TRACE, null, null, paramMap);
-                    break;
-                default:
-                    break;
-            }
-        } catch (Exception ex) {
-            // 无法使用 restTemplate 发送的请求，返回""
-            // ex.printStackTrace();
-            return "";
-        }
-        return object == null ? "" : object.toString();
+        return objectNode;
     }
 
     /**
      * 封装post请求体
      *
      * @param list
+     * @param map
      * @return
      */
-    private Map<String, Object> buildParamMap(List<Request> list) {
-        Map<String, Object> map = new HashMap<>(8);
+    private Map<String, Object> buildParamMap(List<Request> list, Map<String, Object> map) {
+        Map<String, Object> paramMap = new HashMap<>(8);
         if (list != null && list.size() > 0) {
             for (Request request : list) {
                 String name = request.getName();
                 String type = request.getType();
                 switch (type) {
                     case "string":
-                        map.put(name, "string");
+                        paramMap.put(name, "string");
                         break;
                     case "integer":
-                        map.put(name, 0);
+                        paramMap.put(name, 0);
                         break;
                     case "number":
-                        map.put(name, 0.0);
+                        paramMap.put(name, 0.0);
                         break;
                     case "boolean":
-                        map.put(name, true);
+                        paramMap.put(name, true);
                         break;
                     case "body":
-                        map.put(name, new HashMap<>(2));
-                        break;
+                        String paramType = request.getParamType();
+                        ObjectNode objectNode = parseRef(paramType, map);
+                        return BeanMap.create(objectNode);
                     default:
-                        map.put(name, null);
+                        paramMap.put(name, null);
                         break;
                 }
             }
         }
-        return map;
+        return paramMap;
     }
 }

@@ -21,6 +21,7 @@ public class WordController {
     /**
      * @param model
      * @return
+     *
      * @see #toWord(Model)
      */
     @Deprecated
