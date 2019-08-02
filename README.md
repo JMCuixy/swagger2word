@@ -22,7 +22,7 @@
 1. Spring 框架向 SpringBoot 升级
 2. thymeleaf 取代 jsp模板 
 
-#### SwaggerToWord 1.4 (2019-08-02)
+#### 版本：SwaggerToWord 1.4 (2019-08-02)
 1. 取消 HttpClient 的请求方式去获得返回值，改由从 Swagger Json 文件中直接读取  
 2. 针对 application/json 请求方式的入参做渲染     
 3. 对于文字过多导致 HTML table 变形做适配   
