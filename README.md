@@ -5,21 +5,16 @@
 3. 可以看到网页上生成的类似 word 文档的页面，右键另存为 xxx.doc 文件即可。
 
 #### 版本： SwaggerToWord 1.0 （2018-01-18）
-1. 一个Swagger API 文档 转 Word 文档的工具项目 
+1. 一个Swagger API 文档转 Word 文档的工具项目 
 2. 项目想法和说明可以参考：[http://www.cnblogs.com/jmcui/p/8298823.html](http://www.cnblogs.com/jmcui/p/8298823.html)
 
 #### 版本：SwaggerToWord 1.1 (2018-02-11)
-- 已解决：
-  - 替换HttpClient工具类以适配更多的Restful服务。
-  - 把 json 示例文件替换成 官方的示例文件。
-  - 更改写死的模板。让生成的 word 的内容都从Swagger api 中来。
+1. 替换 HttpClient 工具类以适配更多的Restful服务。
+2. 把 json 示例文件替换成官方的示例文件。
+3. 更改写死的模板。让生成的 word 的内容都从 Swagger api 中来。
 
-- 待解决：
-  - Http 诸多的参数请求形式，比如 header、body、file等 还没有去处理。</li>
-  - 用户自定义的对象还没有适配。</li> 
- 
 #### 版本：SwaggerToWord 1.2 (2018-06-21)
-1. 引入了Spring的RestTemplate取代 HttpClients 以支持更多的Restful请求。
+1. 引入了 Spring 的 RestTemplate 取代 HttpClients 以支持更多的 Restful 请求。
 2. 命名规范以及增加异常处理，对于无法处理的HTTP请求返回空字符串。
 3. 修改之前导入data.josn的方式，变成 restTemplate.getForObject("SwaggerJson的url地址",Map.class) 的动态获取方式。
 
@@ -31,6 +26,4 @@
 1. 取消 HttpClient 的请求方式去获得返回值，改由从 Swagger Json 文件中直接读取  
 2. 针对 application/json 请求方式的入参做渲染     
 3. 对于文字过多导致 HTML table 变形做适配   
-4. 真诚感谢<a href="https://github.com/fupengzhan"> fupengzhan </a> 的代码贡献  
-
-  
+4. 真诚感谢 [fupengzhan](https://github.com/fupengzhan)  的代码贡献  
