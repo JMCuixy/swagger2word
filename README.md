@@ -4,7 +4,7 @@
 2、服务启动后：访问 http://host(主机):port(端口)/toWord，etc：http://127.0.0.1:8080/toWord <br/>
 3、可以看到网页上生成的类似 word 文档的页面，右键另存为 xxx.doc 文件即可。
 </p>
-<p>----------------------------------</p>
+<p style="color:red">----------------------------------</p>
 <h5> 版本： SwaggerToWord 1.0 （2018-01-18）</h5>
 <p>简介：一个Swagger API 文档 转 Word 文档的工具项目</P>
 <p>备注：项目想法和说明可以参考：<a href='http://www.cnblogs.com/jmcui/p/8298823.html'>http://www.cnblogs.com/jmcui/p/8298823.html</a></P>
