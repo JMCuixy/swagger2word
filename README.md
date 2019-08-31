@@ -26,4 +26,4 @@
 1. 取消 HttpClient 的请求方式去获得返回值，改由从 Swagger Json 文件中直接读取  
 2. 针对 application/json 请求方式的入参做渲染     
 3. 对于文字过多导致 HTML table 变形做适配   
-4. 真诚感谢 [fupengzhan](https://github.com/fupengzhan)  的代码贡献  
+4. 真诚感谢 [fpzhan](https://github.com/fpzhan)  的代码贡献  
