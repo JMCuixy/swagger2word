@@ -34,6 +34,10 @@ public class JavaConfig {
         HttpComponentsClientHttpRequestFactory requestFactory =
                 new HttpComponentsClientHttpRequestFactory();
         requestFactory.setHttpClient(httpClient);
+
+        //60s
+        requestFactory.setConnectTimeout(60 * 1000);
+        requestFactory.setReadTimeout(60 * 1000);
         return new RestTemplate(requestFactory);
     }
 }

@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cglib.beans.BeanMap;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
@@ -16,7 +15,9 @@ import org.word.dto.Response;
 import org.word.dto.Table;
 import org.word.service.WordService;
 import org.word.utils.JsonUtils;
+import org.word.utils.MenuUtils;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -124,7 +125,10 @@ public class WordServiceImpl implements WordService {
 
                     //封装Table
                     Table table = new Table();
-                    table.setTitle(title);
+                    //是否添加为菜单
+                    if (MenuUtils.isMenu(title)) {
+                        table.setTitle(title);
+                    }
                     table.setUrl(url);
                     table.setTag(tag);
                     table.setDescription(description);
@@ -235,7 +239,7 @@ public class WordServiceImpl implements WordService {
      * @param map
      * @return
      */
-    private Map<String, Object> buildParamMap(List<Request> list, Map<String, Object> map) {
+    private Map<String, Object> buildParamMap(List<Request> list, Map<String, Object> map) throws IOException {
         Map<String, Object> paramMap = new HashMap<>(8);
         if (list != null && list.size() > 0) {
             for (Request request : list) {
@@ -257,7 +261,7 @@ public class WordServiceImpl implements WordService {
                     case "body":
                         String paramType = request.getParamType();
                         ObjectNode objectNode = parseRef(paramType, map);
-                        return BeanMap.create(objectNode);
+                        return JsonUtils.readValue(objectNode.toString(), Map.class);
                     default:
                         paramMap.put(name, null);
                         break;
