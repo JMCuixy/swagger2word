@@ -165,7 +165,9 @@ public class WordServiceImpl implements WordService {
                         arrayNode.add(objectNode);
                         table.setResponseParam(arrayNode.toString());
                         result.add(table);
+                        continue;
                     }
+                    result.add(table);
                 }
             }
         } catch (Exception e) {
