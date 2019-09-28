@@ -5,7 +5,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.word.dto.Request;
 import org.word.dto.Table;
 import org.word.service.WordService;
 
@@ -23,12 +22,11 @@ public class WordController {
     /**
      * @param model
      * @return
-     *
      * @see #(Model)
      */
     @Deprecated
-    @RequestMapping("/getWord")
-    public String getWord(Model model, @RequestParam("url") String url) {
+    @RequestMapping("/toWord")
+    public String getWord(Model model, @RequestParam(value = "url", required = false) String url) {
         List<Table> tables = tableService.tableList(url);
         model.addAttribute("tables", tables);
         return "word";

@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
@@ -19,28 +18,25 @@ import org.word.utils.JsonUtils;
 import org.word.utils.MenuUtils;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * @Author zhu-shb
- * @Description 修改源码
- * @Date 15:56 2019/9/26
+ * @Author XiuYin.Cui
+ * @Date 2018/1/12
  **/
 @Slf4j
 @Service
 public class WordServiceImpl implements WordService {
 
-
+    @Autowired
     private RestTemplate restTemplate;
 
-    public WordServiceImpl(@Autowired RestTemplate restTemplate) {
-        restTemplate.getMessageConverters().set(1, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        this.restTemplate = restTemplate;
-    }
+    @Value("${swagger.url}")
+    private String swaggerUrl;
 
     @Override
     public List<Table> tableList(String jsonUrl) {
+        jsonUrl = Optional.ofNullable(jsonUrl).orElse(swaggerUrl);
         List<Table> result = new ArrayList<>();
         try {
             String jsonStr = restTemplate.getForObject(jsonUrl, String.class);
@@ -61,7 +57,6 @@ public class WordServiceImpl implements WordService {
                         // 2.请求方式，类似为 get,post,delete,put 这样
                         String requestType = firstRequest.getKey();
                         //不管有几种请求方式，都只解析第一种
-
                         Map<String, Object> content = firstRequest.getValue();
                         // 4. 大标题（类说明）
                         String title = String.valueOf(((List) content.get("tags")).get(0));
@@ -142,7 +137,7 @@ public class WordServiceImpl implements WordService {
                         table.setResponseList(responseList);
                         table.setRequestParam(JsonUtils.writeJsonStr(buildParamMap(requestList, map)));
                         for (Request request : requestList) {
-                            request.setParamType(request.getParamType().replaceAll("#/definitions/",""));
+                            request.setParamType(request.getParamType().replaceAll("#/definitions/", ""));
                         }
                         table.setRequestList(requestList);
                         // 取出来状态是200时的返回值
@@ -206,14 +201,18 @@ public class WordServiceImpl implements WordService {
             }
             //取出ref最后一个参数 end
             //取出参数
-            Map<String, Object> properties = (Map<String, Object>) tmpMap.get("properties");
+            if (tmpMap == null) {
+                return objectNode;
+            }
+            Object properties = tmpMap.get("properties");
             if (properties == null) {
                 return objectNode;
             }
-            Set<String> keys = properties.keySet();
+            Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+            Set<String> keys = propertiesMap.keySet();
             //遍历key
             for (String key : keys) {
-                Map<String, Object> keyMap = (Map) properties.get(key);
+                Map<String, Object> keyMap = (Map) propertiesMap.get(key);
                 if ("array".equals(keyMap.get("type"))) {
                     //数组的处理方式
                     String sonRef = (String) ((Map) keyMap.get("items")).get("$ref");
