@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
@@ -18,26 +19,31 @@ import org.word.utils.JsonUtils;
 import org.word.utils.MenuUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
- * Created by XiuYin.Cui on 2018/1/12.
- */
+ * @Author zhu-shb
+ * @Description 修改源码
+ * @Date 15:56 2019/9/26
+ **/
 @Slf4j
 @Service
 public class WordServiceImpl implements WordService {
 
-    @Autowired
+
     private RestTemplate restTemplate;
 
-    @Value("${swagger.url}")
-    private String swaggerUrl;
+    public WordServiceImpl(@Autowired RestTemplate restTemplate) {
+        restTemplate.getMessageConverters().set(1, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+        this.restTemplate = restTemplate;
+    }
 
     @Override
-    public List<Table> tableList() {
+    public List<Table> tableList(String jsonUrl) {
         List<Table> result = new ArrayList<>();
         try {
-            String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
+            String jsonStr = restTemplate.getForObject(jsonUrl, String.class);
             // convert JSON string to Map
             Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
             //解析paths
@@ -46,128 +52,130 @@ public class WordServiceImpl implements WordService {
                 Iterator<Map.Entry<String, LinkedHashMap>> it = paths.entrySet().iterator();
                 while (it.hasNext()) {
                     Map.Entry<String, LinkedHashMap> path = it.next();
-                    // 1.请求路径
-                    String url = path.getKey();
-                    // 2.请求方式，类似为 get,post,delete,put 这样
-                    String requestType = "";
-                    Map<String, LinkedHashMap> value = path.getValue();
-                    Set<String> requestTypes = value.keySet();
-                    for (String str : requestTypes) {
-                        requestType += str + ",";
-                    }
-                    Iterator<Map.Entry<String, LinkedHashMap>> it2 = value.entrySet().iterator();
-                    //不管有几种请求方式，都只解析第一种
-                    Map.Entry<String, LinkedHashMap> firstRequest = it2.next();
-                    Map<String, Object> content = firstRequest.getValue();
-                    // 4. 大标题（类说明）
-                    String title = String.valueOf(((List) content.get("tags")).get(0));
-                    // 5.小标题 （方法说明）
-                    String tag = String.valueOf(content.get("summary"));
-                    // 6.接口描述
-                    String description = String.valueOf(content.get("summary"));
-                    // 7.请求参数格式，类似于 multipart/form-data
-                    String requestForm = "";
-                    List<String> consumes = (List) content.get("consumes");
-                    if (consumes != null && consumes.size() > 0) {
-                        for (String consume : consumes) {
-                            requestForm += consume + ",";
-                        }
-                    }
-                    // 8.返回参数格式，类似于 application/json
-                    String responseForm = "";
-                    List<String> produces = (List) content.get("produces");
-                    if (produces != null && produces.size() > 0) {
-                        for (String produce : produces) {
-                            responseForm += produce + ",";
-                        }
-                    }
-                    // 9. 请求体
-                    List<Request> requestList = new ArrayList<>();
-                    List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
-                    if (!CollectionUtils.isEmpty(parameters)) {
-                        for (Map<String, Object> param : parameters) {
-                            Request request = new Request();
-                            request.setName(String.valueOf(param.get("name")));
-                            Object in = param.get("in");
-                            if (in != null && "body".equals(in)) {
-                                request.setType(String.valueOf(in));
-                                Map<String, Object> schema = (Map) param.get("schema");
-                                Object ref = schema.get("$ref");
-                                // 数组情况另外处理
-                                if (schema.get("type") != null && "array".equals(schema.get("type"))) {
-                                    ref = ((Map) schema.get("items")).get("$ref");
-                                }
-                                request.setParamType(ref == null ? "{}" : ref.toString());
-                            } else {
-                                request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
-                                request.setParamType(String.valueOf(in));
+
+                    Iterator<Map.Entry<String, LinkedHashMap>> it2 = path.getValue().entrySet().iterator();
+                    while (it2.hasNext()) {
+                        Map.Entry<String, LinkedHashMap> firstRequest = it2.next();
+                        // 1.请求路径
+                        String url = path.getKey();
+                        // 2.请求方式，类似为 get,post,delete,put 这样
+                        String requestType = firstRequest.getKey();
+                        //不管有几种请求方式，都只解析第一种
+
+                        Map<String, Object> content = firstRequest.getValue();
+                        // 4. 大标题（类说明）
+                        String title = String.valueOf(((List) content.get("tags")).get(0));
+                        // 5.小标题 （方法说明）
+                        String tag = String.valueOf(content.get("summary"));
+                        // 6.接口描述
+                        String description = String.valueOf(content.get("summary"));
+                        // 7.请求参数格式，类似于 multipart/form-data
+                        String requestForm = "";
+                        List<String> consumes = (List) content.get("consumes");
+                        if (consumes != null && consumes.size() > 0) {
+                            for (String consume : consumes) {
+                                requestForm += consume + ",";
                             }
-                            request.setRequire((Boolean) param.get("required"));
-                            request.setRemark(String.valueOf(param.get("description")));
-                            requestList.add(request);
                         }
-                    }
-                    // 10.返回体
-                    List<Response> responseList = new ArrayList<>();
-                    Map<String, Object> responses = (LinkedHashMap) content.get("responses");
-                    Iterator<Map.Entry<String, Object>> it3 = responses.entrySet().iterator();
+                        // 8.返回参数格式，类似于 application/json
+                        String responseForm = "";
+                        List<String> produces = (List) content.get("produces");
+                        if (produces != null && produces.size() > 0) {
+                            for (String produce : produces) {
+                                responseForm += produce + ",";
+                            }
+                        }
+                        // 9. 请求体
+                        List<Request> requestList = new ArrayList<>();
+                        List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
+                        if (!CollectionUtils.isEmpty(parameters)) {
+                            for (Map<String, Object> param : parameters) {
+                                Request request = new Request();
+                                request.setName(String.valueOf(param.get("name")));
+                                Object in = param.get("in");
+                                if (in != null && "body".equals(in)) {
+                                    request.setType(String.valueOf(in));
+                                    Map<String, Object> schema = (Map) param.get("schema");
+                                    Object ref = schema.get("$ref");
+                                    // 数组情况另外处理
+                                    if (schema.get("type") != null && "array".equals(schema.get("type"))) {
+                                        ref = ((Map) schema.get("items")).get("$ref");
+                                    }
+                                    request.setParamType(ref == null ? "{}" : ref.toString());
+                                } else {
+                                    request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
+                                    request.setParamType(String.valueOf(in));
+                                }
+                                request.setRequire((Boolean) param.get("required"));
+                                request.setRemark(String.valueOf(param.get("description")));
+                                requestList.add(request);
+                            }
+                        }
+                        // 10.返回体
+                        List<Response> responseList = new ArrayList<>();
+                        Map<String, Object> responses = (LinkedHashMap) content.get("responses");
+                        Iterator<Map.Entry<String, Object>> it3 = responses.entrySet().iterator();
 
-                    while (it3.hasNext()) {
-                        Response response = new Response();
-                        Map.Entry<String, Object> entry = it3.next();
-                        // 状态码 200 201 401 403 404 这样
-                        response.setName(entry.getKey());
-                        LinkedHashMap<String, Object> statusCodeInfo = (LinkedHashMap) entry.getValue();
-                        response.setDescription(String.valueOf(statusCodeInfo.get("description")));
-                        response.setRemark(String.valueOf(statusCodeInfo.get("description")));
-                        responseList.add(response);
-                    }
+                        while (it3.hasNext()) {
+                            Response response = new Response();
+                            Map.Entry<String, Object> entry = it3.next();
+                            // 状态码 200 201 401 403 404 这样
+                            response.setName(entry.getKey());
+                            LinkedHashMap<String, Object> statusCodeInfo = (LinkedHashMap) entry.getValue();
+                            response.setDescription(String.valueOf(statusCodeInfo.get("description")));
+                            response.setRemark(String.valueOf(statusCodeInfo.get("description")));
+                            responseList.add(response);
+                        }
 
-                    //封装Table
-                    Table table = new Table();
-                    //是否添加为菜单
-                    if (MenuUtils.isMenu(title)) {
-                        table.setTitle(title);
-                    }
-                    table.setUrl(url);
-                    table.setTag(tag);
-                    table.setDescription(description);
-                    table.setRequestForm(StringUtils.removeEnd(requestForm, ","));
-                    table.setResponseForm(StringUtils.removeEnd(responseForm, ","));
-                    table.setRequestType(StringUtils.removeEnd(requestType, ","));
-                    table.setRequestList(requestList);
-                    table.setResponseList(responseList);
-                    table.setRequestParam(JsonUtils.writeJsonStr(buildParamMap(requestList, map)));
-                    // 取出来状态是200时的返回值
-                    Object obj = responses.get("200");
-                    if (obj == null) {
-                        table.setResponseParam("");
+                        //封装Table
+                        Table table = new Table();
+                        //是否添加为菜单
+                        if (MenuUtils.isMenu(title)) {
+                            table.setTitle(title);
+                        }
+                        table.setUrl(url);
+                        table.setTag(tag);
+                        table.setDescription(description);
+                        table.setRequestForm(StringUtils.removeEnd(requestForm, ","));
+                        table.setResponseForm(StringUtils.removeEnd(responseForm, ","));
+                        table.setRequestType(StringUtils.removeEnd(requestType, ","));
+                        table.setResponseList(responseList);
+                        table.setRequestParam(JsonUtils.writeJsonStr(buildParamMap(requestList, map)));
+                        for (Request request : requestList) {
+                            request.setParamType(request.getParamType().replaceAll("#/definitions/",""));
+                        }
+                        table.setRequestList(requestList);
+                        // 取出来状态是200时的返回值
+                        Object obj = responses.get("200");
+                        if (obj == null) {
+                            table.setResponseParam("");
+                            result.add(table);
+                            continue;
+                        }
+                        Object schema = ((Map) obj).get("schema");
+                        if (((Map) schema).get("$ref") != null) {
+                            //非数组类型返回值
+                            String ref = (String) ((Map) schema).get("$ref");
+                            //解析swagger2 ref链接
+                            ObjectNode objectNode = parseRef(ref, map);
+                            table.setResponseParam(objectNode.toString());
+                            result.add(table);
+                            continue;
+                        }
+                        Object items = ((Map) schema).get("items");
+                        if (items != null && ((Map) items).get("$ref") != null) {
+                            //数组类型返回值
+                            String ref = (String) ((Map) items).get("$ref");
+                            //解析swagger2 ref链接
+                            ObjectNode objectNode = parseRef(ref, map);
+                            ArrayNode arrayNode = JsonUtils.createArrayNode();
+                            arrayNode.add(objectNode);
+                            table.setResponseParam(arrayNode.toString());
+                            result.add(table);
+                            continue;
+                        }
                         result.add(table);
-                        continue;
                     }
-                    Object schema = ((Map) obj).get("schema");
-                    if (((Map) schema).get("$ref") != null) {
-                        //非数组类型返回值
-                        String ref = (String) ((Map) schema).get("$ref");
-                        //解析swagger2 ref链接
-                        ObjectNode objectNode = parseRef(ref, map);
-                        table.setResponseParam(objectNode.toString());
-                        result.add(table);
-                        continue;
-                    }
-                    Object items = ((Map) schema).get("items");
-                    if (items != null && ((Map) items).get("$ref") != null) {
-                        //数组类型返回值
-                        String ref = (String) ((Map) items).get("$ref");
-                        //解析swagger2 ref链接
-                        ObjectNode objectNode = parseRef(ref, map);
-                        ArrayNode arrayNode = JsonUtils.createArrayNode();
-                        arrayNode.add(objectNode);
-                        table.setResponseParam(arrayNode.toString());
-                        result.add(table);
-                        continue;
-                    }
-                    result.add(table);
                 }
             }
         } catch (Exception e) {
@@ -263,7 +271,8 @@ public class WordServiceImpl implements WordService {
                     case "body":
                         String paramType = request.getParamType();
                         ObjectNode objectNode = parseRef(paramType, map);
-                        return JsonUtils.readValue(objectNode.toString(), Map.class);
+                        paramMap = JsonUtils.readValue(objectNode.toString(), Map.class);
+                        break;
                     default:
                         paramMap.put(name, null);
                         break;
