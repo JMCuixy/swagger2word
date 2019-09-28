@@ -30,7 +30,7 @@
 3. 对于文字过多导致 HTML table 变形做适配   
 4. 真诚感谢 [fpzhan](https://github.com/fpzhan)  的代码贡献。
 
-### 版本: SwaggerToWord 1.4.1 (2019-09-25)
+##### 版本: SwaggerToWord 1.4.1 (2019-09-25)
 1. 修改相同 UR L不同请求方法（GET,POST,PUT）等情况下，生成一个API的情况。
 2. 修复当请求参数为@RequestBody 时，参数类型显示不正确问题。
 3. 新增直接从请求路径中获取 Swagger JSON,多项目下API文档生成。
