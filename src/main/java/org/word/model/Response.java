@@ -1,4 +1,4 @@
-package org.word.dto;
+package org.word.model;
 
 import lombok.Data;
 

@@ -1,6 +1,6 @@
 package org.word.service;
 
-import org.word.dto.Table;
+import org.word.model.Table;
 
 import java.util.List;
 

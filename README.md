@@ -1,11 +1,11 @@
 ### 使用步骤（Google Chrome）
 1. 
     - 修改 application.yml 文件的<strong> swagger.url </strong>为Swagger Json资源的url地址。
-    - 1.4.2 版本，可通过后面类似链接，使用http://host:port/word?url=url下载doc文件，例如: http://127.0.0.1:8080/word?url=https://petstore.swagger.io/v2/swagger.json 直接下载doc文档
     - 1.4.1 版本后，json 资源的地址可以通过 url 传递，例如：http://127.0.0.1:8080/toWord?url=https://petstore.swagger.io/v2/swagger.json
     - 如果工程内和 url 都配置了资源地址，以 url 上的方案为准。   
 2. 服务启动后：访问 http://host(主机):port(端口)/toWord，etc：http://127.0.0.1:8080/toWord  
 3. 可以看到网页上生成的类似 word 文档的页面，右键另存为 xxx.doc 文件即可。
+4. 1.4.2 版本后，使用 http://host:port/downloadWord?url=url 可一键下载doc文件，例如: http://127.0.0.1:8080/downloadWord?url=https://petstore.swagger.io/v2/swagger.json
 
 #### 版本： SwaggerToWord 1.0 （2018-01-18）
 1. 一个Swagger API 文档转 Word 文档的工具项目 
@@ -32,12 +32,12 @@
 4. 真诚感谢 [fpzhan](https://github.com/fpzhan)  的代码贡献。
 
 ##### 版本: SwaggerToWord 1.4.1 (2019-09-25)
-1. 修改相同 UR L不同请求方法（GET,POST,PUT）等情况下，生成一个API的情况。
-2. 修复当请求参数为@RequestBody 时，参数类型显示不正确问题。
-3. 新增直接从请求路径中获取 Swagger JSON,多项目下API文档生成。
-4. 解决中文乱码问题。
-5. 真诚感谢 [NealLemon](https://github.com/NealLemon) 的代码贡献。
+1. 修复当请求参数为@RequestBody 时，参数类型显示不正确问题。
+2. 新增直接从请求路径中获取 Swagger JSON,多项目下API文档生成。
+3. 解决中文乱码问题。
+4. 真诚感谢 [NealLemon](https://github.com/NealLemon) 的代码贡献。
 
 
 ##### 版本: SwaggerToWord 1.4.2 (2019-10-11)
-1. 增加poi依赖，直接生成doc文档下载
+1. 增加一键下载doc文件文件的方式。
+2. 真诚感谢 [benwudan](https://github.com/benwudan) 的想法和代码贡献。
