@@ -211,6 +211,10 @@ public class WordServiceImpl implements WordService {
                 if ("array".equals(keyMap.get("type"))) {
                     //数组的处理方式
                     String sonRef = (String) ((Map) keyMap.get("items")).get("$ref");
+                    //对象自包含，跳过解析
+                    if(ref.equals(sonRef)){
+                        continue;
+                    }
                     JsonNode jsonNode = parseRef(sonRef, map);
                     ArrayNode arrayNode = JsonUtils.createArrayNode();
                     arrayNode.add(jsonNode);
@@ -218,6 +222,10 @@ public class WordServiceImpl implements WordService {
                 } else if (keyMap.get("$ref") != null) {
                     //对象的处理方式
                     String sonRef = (String) keyMap.get("$ref");
+                    //对象自包含，跳过解析
+                    if(ref.equals(sonRef)){
+                        continue;
+                    }
                     ObjectNode object = parseRef(sonRef, map);
                     objectNode.set(key, object);
                 } else {
