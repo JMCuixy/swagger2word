@@ -143,6 +143,11 @@ public class WordServiceImpl implements WordService {
                         continue;
                     }
                     Object schema = ((Map) obj).get("schema");
+                    if (schema == null) {
+                        table.setResponseParam("");
+                        result.add(table);
+                        continue;
+                    }
                     if (((Map) schema).get("$ref") != null) {
                         //非数组类型返回值
                         String ref = (String) ((Map) schema).get("$ref");
@@ -212,7 +217,7 @@ public class WordServiceImpl implements WordService {
                     //数组的处理方式
                     String sonRef = (String) ((Map) keyMap.get("items")).get("$ref");
                     //对象自包含，跳过解析
-                    if(ref.equals(sonRef)){
+                    if (ref.equals(sonRef)) {
                         continue;
                     }
                     JsonNode jsonNode = parseRef(sonRef, map);
@@ -223,7 +228,7 @@ public class WordServiceImpl implements WordService {
                     //对象的处理方式
                     String sonRef = (String) keyMap.get("$ref");
                     //对象自包含，跳过解析
-                    if(ref.equals(sonRef)){
+                    if (ref.equals(sonRef)) {
                         continue;
                     }
                     ObjectNode object = parseRef(sonRef, map);
