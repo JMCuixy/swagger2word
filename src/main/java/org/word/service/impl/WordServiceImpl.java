@@ -96,7 +96,11 @@ public class WordServiceImpl implements WordService {
                                 request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
                                 request.setParamType(String.valueOf(in));
                             }
-                            request.setRequire((Boolean) param.get("required"));
+                            if (param.get("required") != null){
+                                request.setRequire((Boolean) param.get("required"));
+                            }else{
+                                request.setRequire(false);
+                            }
                             request.setRemark(String.valueOf(param.get("description")));
                             requestList.add(request);
                         }
