@@ -35,14 +35,18 @@
         <!--这个是类的说明-->
         <h4 th:text="${table.title}"></h4>
         <!--这个是每个请求的说明，方便生成文档后进行整理-->
-        <h5 th:text="${table.description}"></h5>
+        <h5 th:text="${table.tag}"></h5>
         <table border="1" cellspacing="0" cellpadding="0" width="100%">
             <tr class="bg">
-                <td colspan="5" th:text="${table.url}"></td>
+                <td colspan="5" th:text="${table.tag}"></td>
             </tr>
             <tr>
                 <td>接口描述</td>
                 <td colspan="4" th:text="${table.description}"></td>
+            </tr>
+            <tr>
+                <td>URL</td>
+                <td colspan="4" th:text="${table.url}"></td>
             </tr>
             <tr>
                 <td>请求方式</td>
