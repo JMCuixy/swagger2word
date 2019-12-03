@@ -1,3 +1,11 @@
+### 页面示例：
+![Image text](https://raw.githubusercontent.com/kevin4j/swagger2word/master/demo_html.jpg)
+
+### WORD示例：
+![Image text](https://raw.githubusercontent.com/kevin4j/swagger2word/master/demo_word.jpg)
+
+
+
 ### 使用步骤（Google Chrome）
 1. 
     - 修改 application.yml 文件的<strong> swagger.url </strong>为Swagger Json资源的url地址。
