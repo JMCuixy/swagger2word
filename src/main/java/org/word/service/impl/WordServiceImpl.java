@@ -35,13 +35,16 @@ public class WordServiceImpl implements WordService {
     private String swaggerUrl;
 
     @Override
-    public List<Table> tableList(String jsonUrl) {
-        jsonUrl = Optional.ofNullable(jsonUrl).orElse(swaggerUrl);
+    public Map<String, Object> tableList(String jsonUrl) {
+        jsonUrl = StringUtils.defaultIfBlank(jsonUrl, swaggerUrl);
+        
+        Map<String, Object> resultMap = new HashMap<>();
         List<Table> result = new ArrayList<>();
         try {
             String jsonStr = restTemplate.getForObject(jsonUrl, String.class);
             // convert JSON string to Map
             Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
+            
             //解析paths
             Map<String, LinkedHashMap> paths = (LinkedHashMap) map.get("paths");
             if (paths != null) {
@@ -124,9 +127,9 @@ public class WordServiceImpl implements WordService {
                     //封装Table
                     Table table = new Table();
                     //是否添加为菜单
-                    if (MenuUtils.isMenu(title)) {
+//                    if (MenuUtils.isMenu(title)) {
                         table.setTitle(title);
-                    }
+//                    }
                     table.setUrl(url);
                     table.setTag(tag);
                     table.setDescription(description);
@@ -174,13 +177,15 @@ public class WordServiceImpl implements WordService {
                         continue;
                     }
                     result.add(table);
-
                 }
             }
+            
+            resultMap.put("tables", result);
+            resultMap.put("info", map.get("info"));
         } catch (Exception e) {
             log.error("parse error", e);
         }
-        return result;
+        return resultMap;
     }
 
 
