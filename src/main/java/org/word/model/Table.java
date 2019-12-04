@@ -62,4 +62,9 @@ public class Table {
      * 返回参数
      */
     private String responseParam;
+    
+    /**
+     * 返回属性列表
+     */
+    private List<ResponseModelAttr> responseModeAttrList;
 }
