@@ -2,6 +2,8 @@ package org.word.service.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -130,6 +132,13 @@ public class WordServiceImpl implements WordService {
                     
                     result.add(table);
                 }
+                
+                //排序，同类别的接口归并在一起
+                Collections.sort(result, new Comparator<Table>() {
+                	public int compare(Table o1, Table o2) {
+                		return o1.getTitle().compareTo(o2.getTitle());
+                	};
+                });
             }
             
             resultMap.put("tables", result);
