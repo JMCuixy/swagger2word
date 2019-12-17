@@ -1,5 +1,6 @@
 package org.word.controller;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by XiuYin.Cui on 2018/1/11.
@@ -41,9 +43,12 @@ public class WordController {
      */
     @Deprecated
     @RequestMapping("/toWord")
-    public String getWord(Model model, @RequestParam(value = "url", required = false) String url) {
-        List<Table> tables = tableService.tableList(url);
-        model.addAttribute("tables", tables);
+    public String getWord(Model model, @RequestParam(value = "url", required = false) String url, Integer type) {
+        Map<String, Object> result = tableService.tableList(url);
+        model.addAttribute("url", StringUtils.defaultIfBlank(url, StringUtils.EMPTY));
+        model.addAttribute("type", type==null ? 0 : type);
+        model.addAttribute("info", result.get("info"));
+        model.addAttribute("tables", result.get("tables"));
         return "word";
     }
 
@@ -54,8 +59,8 @@ public class WordController {
      * @param response
      */
     @RequestMapping("/downloadWord")
-    public void word(@RequestParam String url, HttpServletResponse response) {
-        ResponseEntity<String> forEntity = restTemplate.getForEntity("http://localhost:" + port + "/toWord?url=" + url, String.class);
+    public void word(@RequestParam(required = false) String url, HttpServletResponse response) {
+        ResponseEntity<String> forEntity = restTemplate.getForEntity("http://localhost:" + port + "/toWord?type=1&url=" + StringUtils.defaultIfBlank(url, StringUtils.EMPTY), String.class);
         response.setContentType("application/octet-stream;charset=utf-8");
         response.setCharacterEncoding("utf-8");
         try (BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())) {
