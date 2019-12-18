@@ -28,48 +28,53 @@
             word-wrap: break-word;
             font-size: 14px;
         }
+
         .specialHeight {
             height: 40px;
         }
-        
-        .first_title{
+
+        .first_title {
             height: 60px;
             line-height: 60px;
             margin: 0;
             font-weight: bold;
-            font-size:20px;
+            font-size: 20px;
         }
-        .second_title{
+
+        .second_title {
             height: 40px;
             line-height: 40px;
             margin: 0;
             font-weight: bold;
-            font-size:16px;
+            font-size: 16px;
         }
-        .doc_title{
-            font-size:24px;
-            text-align:center;
+
+        .doc_title {
+            font-size: 24px;
+            text-align: center;
         }
-        .download_btn{
-            float:right;
+
+        .download_btn {
+            float: right;
         }
     </style>
 </head>
 
 <body>
-<div style="width:800px; margin: 0 auto" th:with="count=1">
+<div style="width:800px; margin: 0 auto">
     <div>
-        <p class="doc_title" th:text="${info.title+'（'+info.version+'）'}"></p>
-        <a class="download_btn" th:href="${'/downloadWord?url='+url}" th:if="${type!=1}">下载文档</a>
+        <p class="doc_title" th:text="${info.title +'（'+ info.version +'）'}"></p>
+        <a class="download_btn" th:if="${download == 1}" th:href="${'/downloadWord?url='+ url}">下载文档</a>
         <br>
     </div>
     <div th:each="table,iterStat:${tables}" style="margin-bottom:20px;">
-        <div th:with="preTitle=${iterStat.index>0 ? tables[iterStat.index-1].title : ''}, isSame=${table.title == preTitle}, count=${ table.title == preTitle ? count+1 : 1}">
+        <div th:with="preTitle=${iterStat.index > 0 ? tables[iterStat.index-1].title : ''},
+                      isSame=${table.title == preTitle}">
             <!--这个是类的说明-->
-            <h4 class="first_title" th:if="${!isSame}" th:text="${isSame ? '' : #strings.concat(iterStat.count,'. ', table.title)}"></h4>
+            <h4 class="first_title" th:if="${!isSame}" th:text="${table.title}"></h4>
 
             <!--这个是每个请求的说明，方便生成文档后进行整理-->
-            <h5 class="second_title" th:text="${count+'）'+table.tag}"></h5>
+            <h5 class="second_title" th:text="${table.tag}"></h5>
 
             <table border="1" cellspacing="0" cellpadding="0" width="100%">
                 <tr class="bg">
@@ -95,7 +100,7 @@
                     <td>返回类型</td>
                     <td colspan="4" th:text="${table.responseForm}"></td>
                 </tr>
-    
+
                 <tr class="bg" align="center">
                     <td>参数名</td>
                     <td>数据类型</td>
@@ -103,7 +108,7 @@
                     <td>是否必填</td>
                     <td>说明</td>
                 </tr>
-    
+
                 <tr align="center" th:each="request:${table.requestList}">
                     <td th:text="${request.name}"></td>
                     <td th:text="${request.type}"></td>
@@ -112,33 +117,31 @@
                     <td th:if="${!request.require}" th:text="N"></td>
                     <td th:text="${request.remark}"></td>
                 </tr>
-    
+
                 <tr class="bg" align="center">
                     <td>状态码</td>
                     <td colspan="2">描述</td>
                     <td colspan="2">说明</td>
                 </tr>
-    
+
                 <tr align="center" th:each="response:${table.responseList}">
                     <td th:text="${response.name}"></td>
                     <td colspan="2" th:text="${response.description}"></td>
                     <td colspan="2" th:text="${response.remark}"></td>
                 </tr>
-                
+
                 <tr class="bg" align="center">
-                    <td>返回类名</td>
                     <td>返回属性名</td>
-                    <td>类型</td>
+                    <td colspan="2">类型</td>
                     <td colspan="2">说明</td>
                 </tr>
-    
-                <tr align="center" th:each="response:${table.responseModeAttrList}">
-                    <td th:text="${response.className}"></td>
-                    <td th:text="${response.value}"></td>
-                    <td th:text="${response.type}"></td>
-                    <td colspan="2" th:text="${response.name}"></td>
+
+                <tr align="center" th:each="response:${table.modelAttr.properties}">
+                    <td th:text="${response.name}"></td>
+                    <td colspan="2" th:text="${response.type}"></td>
+                    <td colspan="2" th:text="${response.description}"></td>
                 </tr>
-                
+
                 <tr class="bg">
                     <td colspan="5">示例</td>
                 </tr>
@@ -150,7 +153,7 @@
                     <td class="bg">返回值</td>
                     <td colspan="4" th:text="${table.responseParam}"></td>
                 </tr>
-                
+
             </table>
         </div>
     </div>

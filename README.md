@@ -5,15 +5,13 @@
 ![Image text](https://raw.githubusercontent.com/kevin4j/swagger2word/master/demo_word.jpg)
 
 
-
 ### 使用步骤（Google Chrome）
 1. 
     - 修改 application.yml 文件的<strong> swagger.url </strong>为Swagger Json资源的url地址。
     - 1.4.1 版本后，json 资源的地址可以通过 url 传递，例如：http://127.0.0.1:8080/toWord?url=https://petstore.swagger.io/v2/swagger.json
     - 如果工程内和 url 都配置了资源地址，以 url 上的方案为准。   
 2. 服务启动后：访问 http://host(主机):port(端口)/toWord，etc：http://127.0.0.1:8080/toWord  
-3. 可以看到网页上生成的类似 word 文档的页面，右键另存为 xxx.doc 文件即可。
-4. 1.4.2 版本后，使用 http://host:port/downloadWord?url=url 可一键下载doc文件，例如: http://127.0.0.1:8080/downloadWord?url=https://petstore.swagger.io/v2/swagger.json
+3. 1.5 版本后页面上提供了下载的按钮，可直接点击下载即可。
 
 #### 版本： SwaggerToWord 1.0 （2018-01-18）
 1. 一个Swagger API 文档转 Word 文档的工具项目 
@@ -49,3 +47,7 @@
 ##### 版本: SwaggerToWord 1.4.2 (2019-10-11)
 1. 增加一键下载doc文件文件的方式。
 2. 真诚感谢 [benwudan](https://github.com/benwudan) 的想法和代码贡献。
+
+#### 版本：SwaggerToWord 1.5 (2019-12-18)
+1. 代码梳理和页面美化。
+4. 真诚感谢 [kevin4j](https://github.com/kevin4j)  的代码贡献。

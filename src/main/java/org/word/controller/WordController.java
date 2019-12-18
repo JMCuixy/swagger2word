@@ -9,14 +9,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
-import org.word.model.Table;
 import org.word.service.WordService;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +29,9 @@ public class WordController {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Value("${swagger.url}")
+    private String swaggerUrl;
+
     @Value("${server.port}")
     private Integer port;
 
@@ -43,12 +44,14 @@ public class WordController {
      */
     @Deprecated
     @RequestMapping("/toWord")
-    public String getWord(Model model, @RequestParam(value = "url", required = false) String url, Integer type) {
+    public String getWord(Model model, @RequestParam(value = "url", required = false) String url,
+                          @RequestParam(value = "download", required = false, defaultValue = "1") Integer download) {
+        url = StringUtils.defaultIfBlank(url, swaggerUrl);
         Map<String, Object> result = tableService.tableList(url);
-        model.addAttribute("url", StringUtils.defaultIfBlank(url, StringUtils.EMPTY));
-        model.addAttribute("type", type==null ? 0 : type);
+        model.addAttribute("url", url);
         model.addAttribute("info", result.get("info"));
         model.addAttribute("tables", result.get("tables"));
+        model.addAttribute("download", download);
         return "word";
     }
 
@@ -60,7 +63,7 @@ public class WordController {
      */
     @RequestMapping("/downloadWord")
     public void word(@RequestParam(required = false) String url, HttpServletResponse response) {
-        ResponseEntity<String> forEntity = restTemplate.getForEntity("http://localhost:" + port + "/toWord?type=1&url=" + StringUtils.defaultIfBlank(url, StringUtils.EMPTY), String.class);
+        ResponseEntity<String> forEntity = restTemplate.getForEntity("http://localhost:" + port + "/toWord?download=0&url=" + StringUtils.defaultIfBlank(url, swaggerUrl), String.class);
         response.setContentType("application/octet-stream;charset=utf-8");
         response.setCharacterEncoding("utf-8");
         try (BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())) {
@@ -71,7 +74,6 @@ public class WordController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
 

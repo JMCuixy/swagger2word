@@ -7,5 +7,5 @@ import java.util.Map;
  */
 public interface WordService {
 
-    Map<String,Object> tableList(String jsonUrl);
+    Map<String,Object> tableList(String swaggerUrl);
 }
