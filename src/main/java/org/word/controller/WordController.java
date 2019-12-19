@@ -49,9 +49,8 @@ public class WordController {
         url = StringUtils.defaultIfBlank(url, swaggerUrl);
         Map<String, Object> result = tableService.tableList(url);
         model.addAttribute("url", url);
-        model.addAttribute("info", result.get("info"));
-        model.addAttribute("tables", result.get("tables"));
         model.addAttribute("download", download);
+        model.addAllAttributes(result);
         return "word";
     }
 

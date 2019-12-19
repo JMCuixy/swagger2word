@@ -17,6 +17,7 @@ import org.word.utils.JsonUtils;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * @Author XiuYin.Cui
@@ -114,16 +115,9 @@ public class WordServiceImpl implements WordService {
 
                     result.add(table);
                 }
-
-                //排序，同类别的接口归并在一起
-                Collections.sort(result, new Comparator<Table>() {
-                    public int compare(Table o1, Table o2) {
-                        return o1.getTitle().compareTo(o2.getTitle());
-                    }
-                });
             }
-
-            resultMap.put("tables", result);
+            Map<String, List<Table>> tableMap = result.stream().parallel().collect(Collectors.groupingBy(Table::getTitle));
+            resultMap.put("tableMap", new TreeMap<>(tableMap));
             resultMap.put("info", map.get("info"));
 
             log.debug(JsonUtils.writeJsonStr(resultMap));
