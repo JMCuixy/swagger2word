@@ -136,11 +136,8 @@
                     <td colspan="2">说明</td>
                 </tr>
 
-                <tr align="center" th:each="response:${table.modelAttr.properties}">
-                    <td th:text="${response.name}"></td>
-                    <td colspan="2" th:text="${response.type}"></td>
-                    <td colspan="2" th:text="${response.description}"></td>
-                </tr>
+<!--               对返回参数 递归生成行-->
+                <tbody th:include="this::response(${table.modelAttr.properties},'', 1)"/>
 
                 <tr class="bg">
                     <td colspan="5">示例</td>
@@ -158,5 +155,18 @@
         </div>
     </div>
 </div>
+
+<th:block th:fragment="response(properties,count, lv)">
+    <th:block th:each="p,c : ${properties}">
+        <tr align="center">
+            <td align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"
+                th:style="|padding-left:${10*lv}px|"></td>
+            <td colspan="2" th:text="${p.type}"></td>
+            <td colspan="2" th:text="${p.description}"></td>
+        </tr>
+        <th:block th:unless="${#lists.isEmpty(p.properties)}"
+                  th:include="this::response(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>
+    </th:block>
+</th:block>
 </body>
 </html>

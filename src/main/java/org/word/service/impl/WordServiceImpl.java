@@ -239,39 +239,59 @@ public class WordServiceImpl implements WordService {
             Iterator<String> modelNameIt = definitions.keySet().iterator();
             while (modelNameIt.hasNext()) {
                 String modeName = modelNameIt.next();
-                Map<String, Object> modeProperties = (Map<String, Object>) definitions.get(modeName).get("properties");
-                if (modeProperties == null) {
-                    continue;
-                }
-                Iterator<Entry<String, Object>> mIt = modeProperties.entrySet().iterator();
-
-                List<ModelAttr> attrList = new ArrayList<>();
-
-                //解析属性
-                while (mIt.hasNext()) {
-                    Entry<String, Object> mEntry = mIt.next();
-                    Map<String, Object> attrInfoMap = (Map<String, Object>) mEntry.getValue();
-                    ModelAttr modeAttr = new ModelAttr();
-                    modeAttr.setName(mEntry.getKey());
-                    modeAttr.setType((String) attrInfoMap.get("type"));
-                    if (attrInfoMap.get("format") != null) {
-                        modeAttr.setType(modeAttr.getType() + "(" + attrInfoMap.get("format") + ")");
-                    }
-                    modeAttr.setType(StringUtils.defaultIfBlank(modeAttr.getType(), "object"));
-                    modeAttr.setDescription((String) attrInfoMap.get("description"));
-                    attrList.add(modeAttr);
-                }
-
-                ModelAttr modeAttr = new ModelAttr();
-                Object title = definitions.get(modeName).get("title");
-                Object description = definitions.get(modeName).get("description");
-                modeAttr.setClassName(title == null ? "" : title.toString());
-                modeAttr.setDescription(description == null ? "" : description.toString());
-                modeAttr.setProperties(attrList);
-                definitinMap.put("#/definitions/" + modeName, modeAttr);
+                getAndPutModelAttr(definitions, definitinMap, modeName);
             }
         }
         return definitinMap;
+    }
+
+    /**
+     * 递归生成ModelAttr
+     * 对$ref类型设置具体属性
+     */
+    private ModelAttr getAndPutModelAttr(Map<String, Map<String, Object>> swaggerMap, Map<String, ModelAttr> resMap, String modeName) {
+        if (resMap.get(modeName) != null) {
+            return resMap.get("#/definitions/" + modeName);
+        }
+        Map<String, Object> modeProperties = (Map<String, Object>) swaggerMap.get(modeName).get("properties");
+        if (modeProperties == null) {
+            return null;
+        }
+        Iterator<Entry<String, Object>> mIt = modeProperties.entrySet().iterator();
+
+        List<ModelAttr> attrList = new ArrayList<>();
+        //解析属性
+        while (mIt.hasNext()) {
+            Entry<String, Object> mEntry = mIt.next();
+            Map<String, Object> attrInfoMap = (Map<String, Object>) mEntry.getValue();
+            ModelAttr modeAttr = new ModelAttr();
+            modeAttr.setName(mEntry.getKey());
+            modeAttr.setType((String) attrInfoMap.get("type"));
+            if (attrInfoMap.get("format") != null) {
+                modeAttr.setType(modeAttr.getType() + "(" + attrInfoMap.get("format") + ")");
+            }
+            Object ref = attrInfoMap.get("$ref");
+            Object items = attrInfoMap.get("items");
+            if (ref != null || (items != null && (ref = ((Map)items).get("$ref")) != null)) {
+                String refName = ref.toString();
+                //截取 #/definitions/ 后面的
+                String clsName = refName.substring(14);
+                ModelAttr refModel = getAndPutModelAttr(swaggerMap, resMap, clsName);
+                modeAttr.setProperties(refModel.getProperties());
+            }
+            modeAttr.setType(StringUtils.defaultIfBlank(modeAttr.getType(), "object"));
+            modeAttr.setDescription((String) attrInfoMap.get("description"));
+            attrList.add(modeAttr);
+        }
+        //BaseResult«PageData«DopAppRecordVo»»
+        ModelAttr modeAttr = new ModelAttr();
+        Object title = swaggerMap.get(modeName).get("title");
+        Object description = swaggerMap.get(modeName).get("description");
+        modeAttr.setClassName(title == null ? "" : title.toString());
+        modeAttr.setDescription(description == null ? "" : description.toString());
+        modeAttr.setProperties(attrList);
+        resMap.put("#/definitions/" + modeName, modeAttr);
+        return modeAttr;
     }
 
     /**
