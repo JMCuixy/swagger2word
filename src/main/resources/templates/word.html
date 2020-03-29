@@ -170,13 +170,13 @@
             <td align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"
                 th:style="|padding-left:${10*lv}px|"></td>
             <td th:text="${p.type}"></td>
-            <td>body field</td>
+            <td></td>
             <td th:if="${p.require}" th:text="Y"></td>
             <td th:if="${!p.require}" th:text="N"></td>
             <td th:text="${p.description}"></td>
         </tr>
         <th:block th:unless="${#lists.isEmpty(p.properties)}"
-                  th:include="this::response(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>
+                  th:include="this::request(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>
     </th:block>
 </th:block>
 
