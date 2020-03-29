@@ -109,14 +109,22 @@
                     <td>说明</td>
                 </tr>
 
-                <tr align="center" th:each="request:${table.requestList}">
-                    <td th:text="${request.name}"></td>
-                    <td th:text="${request.type}"></td>
-                    <td th:text="${request.paramType}"></td>
-                    <td th:if="${request.require}" th:text="Y"></td>
-                    <td th:if="${!request.require}" th:text="N"></td>
-                    <td th:text="${request.remark}"></td>
-                </tr>
+                <th:block th:each="request, c:${table.requestList}">
+                    <tr align="center">
+                        <td align="left" th:text="${c.count} + '.' + ${request.name}"></td>
+                        <td th:text="${request.type}"></td>
+                        <td th:text="${request.paramType}"></td>
+                        <td th:if="${request.require}" th:text="Y"></td>
+                        <td th:if="${!request.require}" th:text="N"></td>
+                        <td th:text="${request.remark}"></td>
+                        <!--                        <td th:if="${request.modelAttr}" th:text="asdfagadfg"></td>-->
+                    </tr>
+                    <th:block th:if="${request.modelAttr}">
+                        <tbody th:include="this::request(${request.modelAttr.properties},'', ${c.count})"/>
+                    </th:block>
+
+
+                </th:block>
 
                 <tr class="bg" align="center">
                     <td>状态码</td>
@@ -155,6 +163,22 @@
         </div>
     </div>
 </div>
+
+<th:block th:fragment="request(properties,count, lv)">
+    <th:block th:each="p,c : ${properties}">
+        <tr align="center">
+            <td align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"
+                th:style="|padding-left:${10*lv}px|"></td>
+            <td th:text="${p.type}"></td>
+            <td>body field</td>
+            <td th:if="${p.require}" th:text="Y"></td>
+            <td th:if="${!p.require}" th:text="N"></td>
+            <td th:text="${p.description}"></td>
+        </tr>
+        <th:block th:unless="${#lists.isEmpty(p.properties)}"
+                  th:include="this::response(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>
+    </th:block>
+</th:block>
 
 <th:block th:fragment="response(properties,count, lv)">
     <th:block th:each="p,c : ${properties}">

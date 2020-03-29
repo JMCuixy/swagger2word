@@ -100,7 +100,7 @@ public class WordServiceImpl implements WordService {
                     table.setRequestForm(requestForm);
                     table.setResponseForm(responseForm);
                     table.setRequestType(requestType);
-                    table.setRequestList(processRequestList(parameters));
+                    table.setRequestList(processRequestList(parameters, definitinMap));
                     table.setResponseList(processResponseCodeList(responses));
 
                     // 取出来状态是200时的返回值
@@ -110,7 +110,7 @@ public class WordServiceImpl implements WordService {
                     }
 
                     //示例
-                    table.setRequestParam(processRequestParam(table.getRequestList(), definitinMap));
+                    table.setRequestParam(processRequestParam(table.getRequestList()));
                     table.setResponseParam(processResponseParam(obj, definitinMap));
 
                     result.add(table);
@@ -131,9 +131,10 @@ public class WordServiceImpl implements WordService {
      * 处理请求参数列表
      *
      * @param parameters
+     * @param definitinMap
      * @return
      */
-    private List<Request> processRequestList(List<LinkedHashMap> parameters) {
+    private List<Request> processRequestList(List<LinkedHashMap> parameters, Map<String, ModelAttr> definitinMap) {
         List<Request> requestList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(parameters)) {
             for (Map<String, Object> param : parameters) {
@@ -141,6 +142,9 @@ public class WordServiceImpl implements WordService {
                 Request request = new Request();
                 request.setName(String.valueOf(param.get("name")));
                 request.setType(param.get("type") == null ? "object" : param.get("type").toString());
+                if (param.get("format") != null) {
+                    request.setType(request.getType() + "(" + param.get("format") + ")");
+                }
                 request.setParamType(String.valueOf(in));
                 // 考虑对象参数类型
                 if (in != null && "body".equals(in)) {
@@ -149,8 +153,12 @@ public class WordServiceImpl implements WordService {
                     // 数组情况另外处理
                     if (schema.get("type") != null && "array".equals(schema.get("type"))) {
                         ref = ((Map) schema.get("items")).get("$ref");
+                        request.setType("array");
                     }
-                    request.setParamType(ref == null ? "{}" : ref.toString());
+                    if (ref != null) {
+                        request.setType(request.getType() + ":" + ref.toString().replaceAll("#/definitions/", ""));
+                        request.setModelAttr(definitinMap.get(ref));
+                    }
                 }
                 // 是否必填
                 request.setRequire(false);
@@ -159,7 +167,6 @@ public class WordServiceImpl implements WordService {
                 }
                 // 参数说明
                 request.setRemark(String.valueOf(param.get("description")));
-                request.setParamType(request.getParamType().replaceAll("#/definitions/", ""));
                 requestList.add(request);
             }
         }
@@ -250,7 +257,11 @@ public class WordServiceImpl implements WordService {
      * 对$ref类型设置具体属性
      */
     private ModelAttr getAndPutModelAttr(Map<String, Map<String, Object>> swaggerMap, Map<String, ModelAttr> resMap, String modeName) {
-        if (resMap.get(modeName) != null) {
+        ModelAttr modeAttr;
+        if ((modeAttr = resMap.get("#/definitions/" + modeName)) == null) {
+            modeAttr = new ModelAttr();
+            resMap.put("#/definitions/" + modeName, modeAttr);
+        } else if (modeAttr.isCompleted()) {
             return resMap.get("#/definitions/" + modeName);
         }
         Map<String, Object> modeProperties = (Map<String, Object>) swaggerMap.get(modeName).get("properties");
@@ -264,33 +275,33 @@ public class WordServiceImpl implements WordService {
         while (mIt.hasNext()) {
             Entry<String, Object> mEntry = mIt.next();
             Map<String, Object> attrInfoMap = (Map<String, Object>) mEntry.getValue();
-            ModelAttr modeAttr = new ModelAttr();
-            modeAttr.setName(mEntry.getKey());
-            modeAttr.setType((String) attrInfoMap.get("type"));
+            ModelAttr child = new ModelAttr();
+            child.setName(mEntry.getKey());
+            child.setType((String) attrInfoMap.get("type"));
             if (attrInfoMap.get("format") != null) {
-                modeAttr.setType(modeAttr.getType() + "(" + attrInfoMap.get("format") + ")");
+                child.setType(child.getType() + "(" + attrInfoMap.get("format") + ")");
             }
+            child.setType(StringUtils.defaultIfBlank(child.getType(), "object"));
+
             Object ref = attrInfoMap.get("$ref");
             Object items = attrInfoMap.get("items");
-            if (ref != null || (items != null && (ref = ((Map)items).get("$ref")) != null)) {
+            if (ref != null || (items != null && (ref = ((Map) items).get("$ref")) != null)) {
                 String refName = ref.toString();
                 //截取 #/definitions/ 后面的
                 String clsName = refName.substring(14);
+                modeAttr.setCompleted(true);
                 ModelAttr refModel = getAndPutModelAttr(swaggerMap, resMap, clsName);
-                modeAttr.setProperties(refModel.getProperties());
+                child.setProperties(refModel.getProperties());
+                child.setType(child.getType() + ":" + clsName);
             }
-            modeAttr.setType(StringUtils.defaultIfBlank(modeAttr.getType(), "object"));
-            modeAttr.setDescription((String) attrInfoMap.get("description"));
-            attrList.add(modeAttr);
+            child.setDescription((String) attrInfoMap.get("description"));
+            attrList.add(child);
         }
-        //BaseResult«PageData«DopAppRecordVo»»
-        ModelAttr modeAttr = new ModelAttr();
         Object title = swaggerMap.get(modeName).get("title");
         Object description = swaggerMap.get(modeName).get("description");
         modeAttr.setClassName(title == null ? "" : title.toString());
         modeAttr.setDescription(description == null ? "" : description.toString());
         modeAttr.setProperties(attrList);
-        resMap.put("#/definitions/" + modeName, modeAttr);
         return modeAttr;
     }
 
@@ -321,7 +332,7 @@ public class WordServiceImpl implements WordService {
                 if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
                     Map<String, Object> responseMap = new HashMap<>(8);
                     for (ModelAttr subModelAttr : modelAttr.getProperties()) {
-                        responseMap.put(subModelAttr.getName(), subModelAttr.getType());
+                        responseMap.put(subModelAttr.getName(), getValue(subModelAttr.getType(), subModelAttr));
                     }
                     return JsonUtils.writeJsonStr(responseMap);
                 }
@@ -334,43 +345,135 @@ public class WordServiceImpl implements WordService {
      * 封装请求体
      *
      * @param list
-     * @param definitinMap
      * @return
      */
-    private String processRequestParam(List<Request> list, Map<String, ModelAttr> definitinMap) throws IOException {
-        Map<String, Object> paramMap = new HashMap<>(8);
+    private String processRequestParam(List<Request> list) throws IOException {
+        Map<String, Object> headerMap = new LinkedHashMap<>();
+        Map<String, Object> queryMap = new LinkedHashMap<>();
+        Map<String, Object> jsonMap = new LinkedHashMap<>();
         if (list != null && list.size() > 0) {
             for (Request request : list) {
                 String name = request.getName();
-                String type = request.getType();
-                switch (type) {
-                    case "string":
-                        paramMap.put(name, "string");
+                String paramType = request.getParamType();
+                Object value = getValue(request.getType(), request.getModelAttr());
+                switch (paramType) {
+                    case "header":
+                        headerMap.put(name, value);
                         break;
-                    case "integer":
-                        paramMap.put(name, 0);
-                        break;
-                    case "number":
-                        paramMap.put(name, 0.0);
-                        break;
-                    case "boolean":
-                        paramMap.put(name, true);
+                    case "query":
+                        queryMap.put(name, value);
                         break;
                     case "body":
-                    case "object":
-                        ModelAttr modelAttr = definitinMap.get("#/definitions/" + request.getParamType());
-                        if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
-                            for (ModelAttr subModelAttr : modelAttr.getProperties()) {
-                                paramMap.put(subModelAttr.getName(), subModelAttr.getType());
-                            }
-                            break;
-                        }
-                    default:
-                        paramMap.put(name, null);
+                        //TODO 根据content-type序列化成不同格式，目前只用了json
+                        jsonMap.put(name, value);
                         break;
+                    default:
+                        break;
+
                 }
             }
         }
-        return JsonUtils.writeJsonStr(paramMap);
+        String res = "";
+        if (!queryMap.isEmpty()) {
+            res += getUrlParamsByMap(queryMap);
+        }
+        if (!headerMap.isEmpty()) {
+            res += " " + getHeaderByMap(headerMap);
+        }
+        if (!jsonMap.isEmpty()) {
+            if (jsonMap.size() == 1) {
+                for (Entry<String, Object> entry : jsonMap.entrySet()) {
+                    res += " -d '" + JsonUtils.writeJsonStr(entry.getValue()) + "'";
+                }
+            } else {
+                res += " -d '" + JsonUtils.writeJsonStr(jsonMap) + "'";
+            }
+        }
+        return res;
+    }
+
+    /**
+     * 例子中，字段的默认值
+     *
+     * @param type      类型
+     * @param modelAttr 引用的类型
+     * @return
+     */
+    private Object getValue(String type, ModelAttr modelAttr) {
+        int pos;
+        if ((pos = type.indexOf(":")) != -1) {
+            type = type.substring(0, pos);
+        }
+        switch (type) {
+            case "string":
+                return "string";
+            case "string(date-time)":
+                return "2020/01/01 00:00:00";
+            case "integer":
+            case "integer(int64)":
+            case "integer(int32)":
+                return 0;
+            case "number":
+                return 0.0;
+            case "boolean":
+                return true;
+            case "file":
+                return "(binary)";
+            case "array":
+                List list = new ArrayList();
+                Map<String, Object> map = new LinkedHashMap<>();
+                if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
+                    for (ModelAttr subModelAttr : modelAttr.getProperties()) {
+                        map.put(subModelAttr.getName(), getValue(subModelAttr.getType(), subModelAttr));
+                    }
+                }
+                list.add(map);
+                return list;
+            case "object":
+                map = new LinkedHashMap<>();
+                if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
+                    for (ModelAttr subModelAttr : modelAttr.getProperties()) {
+                        map.put(subModelAttr.getName(), getValue(subModelAttr.getType(), subModelAttr));
+                    }
+                }
+                return map;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * 将map转换成url
+     */
+    public static String getUrlParamsByMap(Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return "";
+        }
+        StringBuffer sb = new StringBuffer();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            sb.append(entry.getKey() + "=" + entry.getValue());
+            sb.append("&");
+        }
+        String s = sb.toString();
+        if (s.endsWith("&")) {
+            s = StringUtils.substringBeforeLast(s, "&");
+        }
+        return s;
+    }
+
+    /**
+     * 将map转换成header
+     */
+    public static String getHeaderByMap(Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return "";
+        }
+        StringBuffer sb = new StringBuffer();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            sb.append("--header '");
+            sb.append(entry.getKey() + ":" + entry.getValue());
+            sb.append("'");
+        }
+        return sb.toString();
     }
 }

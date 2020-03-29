@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8001
   tomcat:
     max-threads: 800
     uri-encoding: UTF-8
@@ -19,7 +19,7 @@ spring:
 
 # Swagger json url address
 # etc. https://petstore.swagger.io/
-swagger.url: https://petstore.swagger.io/v2/swagger.json
+swagger.url: http://localhost:8080/v2/api-docs
 
 
 

@@ -30,6 +30,10 @@ public class ModelAttr implements Serializable {
      */
     private String type = StringUtils.EMPTY;
     /**
+     * 是否必填
+     */
+    private Boolean require = false;
+    /**
      * 属性描述
      */
     private String description;
@@ -37,4 +41,9 @@ public class ModelAttr implements Serializable {
      * 嵌套属性列表
      */
     private List<ModelAttr> properties = new ArrayList<>();
+
+    /**
+     * 是否加载完成，避免循环引用
+     */
+    private boolean isCompleted = false;
 }
