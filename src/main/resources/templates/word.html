@@ -120,7 +120,7 @@
                         <!--                        <td th:if="${request.modelAttr}" th:text="asdfagadfg"></td>-->
                     </tr>
                     <th:block th:if="${request.modelAttr}">
-                        <tbody th:include="this::request(${request.modelAttr.properties},'', ${c.count})"/>
+                        <tbody th:include="this::request(${request.modelAttr.properties},${c.count} + '.', 1)"/>
                     </th:block>
 
 
