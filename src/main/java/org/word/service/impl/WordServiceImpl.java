@@ -291,7 +291,9 @@ public class WordServiceImpl implements WordService {
                 String clsName = refName.substring(14);
                 modeAttr.setCompleted(true);
                 ModelAttr refModel = getAndPutModelAttr(swaggerMap, resMap, clsName);
-                child.setProperties(refModel.getProperties());
+                if (refModel != null) {
+                    child.setProperties(refModel.getProperties());
+                }
                 child.setType(child.getType() + ":" + clsName);
             }
             child.setDescription((String) attrInfoMap.get("description"));
