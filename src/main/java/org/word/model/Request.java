@@ -34,4 +34,9 @@ public class Request implements Serializable{
      * 说明
      */
     private String remark;
+
+    /**
+     * 复杂对象引用
+     */
+    private ModelAttr modelAttr;
 }
