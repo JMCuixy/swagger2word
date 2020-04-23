@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.word.model.ModelAttr;
 import org.word.model.Request;
 import org.word.model.Response;
@@ -15,6 +16,7 @@ import org.word.service.WordService;
 import org.word.utils.JsonUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -34,88 +36,22 @@ public class WordServiceImpl implements WordService {
     @Override
     public Map<String, Object> tableList(String swaggerUrl) {
         Map<String, Object> resultMap = new HashMap<>();
-        List<Table> result = new ArrayList<>();
         try {
             String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
-            // convert JSON string to Map
-            Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
+            resultMap=tableListFromString(jsonStr);
+            log.debug(JsonUtils.writeJsonStr(resultMap));
+        } catch (Exception e) {
+            log.error("parse error", e);
+        }
+        return resultMap;
+    }
 
-            //解析model
-            Map<String, ModelAttr> definitinMap = parseDefinitions(map);
-
-            //解析paths
-            Map<String, Map<String, Object>> paths = (Map<String, Map<String, Object>>) map.get("paths");
-            if (paths != null) {
-                Iterator<Map.Entry<String, Map<String, Object>>> it = paths.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry<String, Map<String, Object>> path = it.next();
-
-                    Iterator<Map.Entry<String, Object>> it2 = path.getValue().entrySet().iterator();
-                    // 1.请求路径
-                    String url = path.getKey();
-
-                    // 2.请求方式，类似为 get,post,delete,put 这样
-                    String requestType = StringUtils.join(path.getValue().keySet(), ",");
-
-                    // 3. 不管有几种请求方式，都只解析第一种
-                    Map.Entry<String, Object> firstRequest = it2.next();
-                    Map<String, Object> content = (Map<String, Object>) firstRequest.getValue();
-
-                    // 4. 大标题（类说明）
-                    String title = String.valueOf(((List) content.get("tags")).get(0));
-
-                    // 5.小标题 （方法说明）
-                    String tag = String.valueOf(content.get("summary"));
-
-                    // 6.接口描述
-                    String description = String.valueOf(content.get("summary"));
-
-                    // 7.请求参数格式，类似于 multipart/form-data
-                    String requestForm = "";
-                    List<String> consumes = (List) content.get("consumes");
-                    if (consumes != null && consumes.size() > 0) {
-                        requestForm = StringUtils.join(consumes, ",");
-                    }
-
-                    // 8.返回参数格式，类似于 application/json
-                    String responseForm = "";
-                    List<String> produces = (List) content.get("produces");
-                    if (produces != null && produces.size() > 0) {
-                        responseForm = StringUtils.join(produces, ",");
-                    }
-
-                    // 9. 请求体
-                    List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
-
-                    // 10.返回体
-                    Map<String, Object> responses = (LinkedHashMap) content.get("responses");
-
-                    //封装Table
-                    Table table = new Table();
-
-                    table.setTitle(title);
-                    table.setUrl(url);
-                    table.setTag(tag);
-                    table.setDescription(description);
-                    table.setRequestForm(requestForm);
-                    table.setResponseForm(responseForm);
-                    table.setRequestType(requestType);
-                    table.setRequestList(processRequestList(parameters, definitinMap));
-                    table.setResponseList(processResponseCodeList(responses));
-
-                    // 取出来状态是200时的返回值
-                    Map<String, Object> obj = (Map<String, Object>) responses.get("200");
-                    if (obj != null && obj.get("schema") != null) {
-                        table.setModelAttr(processResponseModelAttrs(obj, definitinMap));
-                    }
-
-                    //示例
-                    table.setRequestParam(processRequestParam(table.getRequestList()));
-                    table.setResponseParam(processResponseParam(obj, definitinMap));
-
-                    result.add(table);
-                }
-            }
+    @Override
+    public Map<String, Object> tableListFromString(String jsonStr) {
+        Map<String, Object> resultMap = new HashMap<>();
+        List<Table> result = new ArrayList<>();
+        try {
+            Map<String, Object> map = getResultFromString(result, jsonStr);
             Map<String, List<Table>> tableMap = result.stream().parallel().collect(Collectors.groupingBy(Table::getTitle));
             resultMap.put("tableMap", new TreeMap<>(tableMap));
             resultMap.put("info", map.get("info"));
@@ -125,6 +61,103 @@ public class WordServiceImpl implements WordService {
             log.error("parse error", e);
         }
         return resultMap;
+    }
+
+    @Override
+    public Map<String, Object> tableList(MultipartFile jsonFile) {
+        Map<String, Object> resultMap = new HashMap<>();
+        List<Table> result = new ArrayList<>();
+        try {
+            String jsonStr = new String(jsonFile.getBytes());
+            resultMap=tableListFromString(jsonStr);
+            log.debug(JsonUtils.writeJsonStr(resultMap));
+        } catch (Exception e) {
+            log.error("parse error", e);
+        }
+        return resultMap;
+    }
+
+    private Map<String, Object> getResultFromString(List<Table> result, String jsonStr) throws IOException {
+        // convert JSON string to Map
+        Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
+
+        //解析model
+        Map<String, ModelAttr> definitinMap = parseDefinitions(map);
+
+        //解析paths
+        Map<String, Map<String, Object>> paths = (Map<String, Map<String, Object>>) map.get("paths");
+        if (paths != null) {
+            Iterator<Entry<String, Map<String, Object>>> it = paths.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<String, Map<String, Object>> path = it.next();
+
+                Iterator<Entry<String, Object>> it2 = path.getValue().entrySet().iterator();
+                // 1.请求路径
+                String url = path.getKey();
+
+                // 2.请求方式，类似为 get,post,delete,put 这样
+                String requestType = StringUtils.join(path.getValue().keySet(), ",");
+
+                // 3. 不管有几种请求方式，都只解析第一种
+                Entry<String, Object> firstRequest = it2.next();
+                Map<String, Object> content = (Map<String, Object>) firstRequest.getValue();
+
+                // 4. 大标题（类说明）
+                String title = String.valueOf(((List) content.get("tags")).get(0));
+
+                // 5.小标题 （方法说明）
+                String tag = String.valueOf(content.get("summary"));
+
+                // 6.接口描述
+                String description = String.valueOf(content.get("summary"));
+
+                // 7.请求参数格式，类似于 multipart/form-data
+                String requestForm = "";
+                List<String> consumes = (List) content.get("consumes");
+                if (consumes != null && consumes.size() > 0) {
+                    requestForm = StringUtils.join(consumes, ",");
+                }
+
+                // 8.返回参数格式，类似于 application/json
+                String responseForm = "";
+                List<String> produces = (List) content.get("produces");
+                if (produces != null && produces.size() > 0) {
+                    responseForm = StringUtils.join(produces, ",");
+                }
+
+                // 9. 请求体
+                List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
+
+                // 10.返回体
+                Map<String, Object> responses = (LinkedHashMap) content.get("responses");
+
+                //封装Table
+                Table table = new Table();
+
+                table.setTitle(title);
+                table.setUrl(url);
+                table.setTag(tag);
+                table.setDescription(description);
+                table.setRequestForm(requestForm);
+                table.setResponseForm(responseForm);
+                table.setRequestType(requestType);
+                table.setRequestList(processRequestList(parameters, definitinMap));
+                table.setResponseList(processResponseCodeList(responses));
+
+                // 取出来状态是200时的返回值
+                Map<String, Object> obj = (Map<String, Object>) responses.get("200");
+                if (obj != null && obj.get("schema") != null) {
+                    table.setModelAttr(processResponseModelAttrs(obj, definitinMap));
+                }
+
+                //示例
+                table.setRequestParam(processRequestParam(table.getRequestList()));
+                table.setResponseParam(processResponseParam(obj, definitinMap));
+
+                result.add(table);
+            }
+        }
+        return map;
     }
 
     /**
