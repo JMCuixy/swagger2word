@@ -68,8 +68,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.3</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <encoding>utf-8</encoding>
                 </configuration>
             </plugin>
             <plugin>
@@ -102,6 +103,10 @@
                     </execution>
                 </executions>
             </plugin>
+		  	<plugin>
+		  		<groupId>org.springframework.boot</groupId>
+		 		<artifactId>spring-boot-maven-plugin</artifactId>
+		  	</plugin>
         </plugins>
     </build>
 </project>
