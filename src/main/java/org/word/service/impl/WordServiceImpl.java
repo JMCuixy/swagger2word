@@ -16,7 +16,6 @@ import org.word.service.WordService;
 import org.word.utils.JsonUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -38,7 +37,7 @@ public class WordServiceImpl implements WordService {
         Map<String, Object> resultMap = new HashMap<>();
         try {
             String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
-            resultMap=tableListFromString(jsonStr);
+            resultMap = tableListFromString(jsonStr);
             log.debug(JsonUtils.writeJsonStr(resultMap));
         } catch (Exception e) {
             log.error("parse error", e);
@@ -69,7 +68,7 @@ public class WordServiceImpl implements WordService {
         List<Table> result = new ArrayList<>();
         try {
             String jsonStr = new String(jsonFile.getBytes());
-            resultMap=tableListFromString(jsonStr);
+            resultMap = tableListFromString(jsonStr);
             log.debug(JsonUtils.writeJsonStr(resultMap));
         } catch (Exception e) {
             log.error("parse error", e);
@@ -78,91 +77,91 @@ public class WordServiceImpl implements WordService {
     }
 
     // 处理方案一： 同一路由下所有请求方式合并为一个表格
-    // private Map<String, Object> getResultFromString(List<Table> result, String jsonStr) throws IOException {
-    //     // convert JSON string to Map
-    //     Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
+    private Map<String, Object> getResultFromString(List<Table> result, String jsonStr) throws IOException {
+        // convert JSON string to Map
+        Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
 
-    //     //解析model
-    //     Map<String, ModelAttr> definitinMap = parseDefinitions(map);
+        //解析model
+        Map<String, ModelAttr> definitinMap = parseDefinitions(map);
 
-    //     //解析paths
-    //     Map<String, Map<String, Object>> paths = (Map<String, Map<String, Object>>) map.get("paths");
-    //     if (paths != null) {
-    //         Iterator<Entry<String, Map<String, Object>>> it = paths.entrySet().iterator();
-    //         while (it.hasNext()) {
-    //             Entry<String, Map<String, Object>> path = it.next();
+        //解析paths
+        Map<String, Map<String, Object>> paths = (Map<String, Map<String, Object>>) map.get("paths");
+        if (paths != null) {
+            Iterator<Entry<String, Map<String, Object>>> it = paths.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<String, Map<String, Object>> path = it.next();
 
-    //             Iterator<Entry<String, Object>> it2 = path.getValue().entrySet().iterator();
-    //             // 1.请求路径
-    //             String url = path.getKey();
+                Iterator<Entry<String, Object>> it2 = path.getValue().entrySet().iterator();
+                // 1.请求路径
+                String url = path.getKey();
 
-    //             // 2.请求方式，类似为 get,post,delete,put 这样
-    //             String requestType = StringUtils.join(path.getValue().keySet(), ",");
+                // 2.请求方式，类似为 get,post,delete,put 这样
+                String requestType = StringUtils.join(path.getValue().keySet(), ",");
 
-    //             // 3. 不管有几种请求方式，都只解析第一种
-    //             Entry<String, Object> firstRequest = it2.next();
-    //             Map<String, Object> content = (Map<String, Object>) firstRequest.getValue();
+                // 3. 不管有几种请求方式，都只解析第一种
+                Entry<String, Object> firstRequest = it2.next();
+                Map<String, Object> content = (Map<String, Object>) firstRequest.getValue();
 
-    //             // 4. 大标题（类说明）
-    //             String title = String.valueOf(((List) content.get("tags")).get(0));
+                // 4. 大标题（类说明）
+                String title = String.valueOf(((List) content.get("tags")).get(0));
 
-    //             // 5.小标题 （方法说明）
-    //             String tag = String.valueOf(content.get("summary"));
+                // 5.小标题 （方法说明）
+                String tag = String.valueOf(content.get("summary"));
 
-    //             // 6.接口描述
-    //             String description = String.valueOf(content.get("summary"));
+                // 6.接口描述
+                String description = String.valueOf(content.get("summary"));
 
-    //             // 7.请求参数格式，类似于 multipart/form-data
-    //             String requestForm = "";
-    //             List<String> consumes = (List) content.get("consumes");
-    //             if (consumes != null && consumes.size() > 0) {
-    //                 requestForm = StringUtils.join(consumes, ",");
-    //             }
+                // 7.请求参数格式，类似于 multipart/form-data
+                String requestForm = "";
+                List<String> consumes = (List) content.get("consumes");
+                if (consumes != null && consumes.size() > 0) {
+                    requestForm = StringUtils.join(consumes, ",");
+                }
 
-    //             // 8.返回参数格式，类似于 application/json
-    //             String responseForm = "";
-    //             List<String> produces = (List) content.get("produces");
-    //             if (produces != null && produces.size() > 0) {
-    //                 responseForm = StringUtils.join(produces, ",");
-    //             }
+                // 8.返回参数格式，类似于 application/json
+                String responseForm = "";
+                List<String> produces = (List) content.get("produces");
+                if (produces != null && produces.size() > 0) {
+                    responseForm = StringUtils.join(produces, ",");
+                }
 
-    //             // 9. 请求体
-    //             List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
+                // 9. 请求体
+                List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
 
-    //             // 10.返回体
-    //             Map<String, Object> responses = (LinkedHashMap) content.get("responses");
+                // 10.返回体
+                Map<String, Object> responses = (LinkedHashMap) content.get("responses");
 
-    //             //封装Table
-    //             Table table = new Table();
+                //封装Table
+                Table table = new Table();
 
-    //             table.setTitle(title);
-    //             table.setUrl(url);
-    //             table.setTag(tag);
-    //             table.setDescription(description);
-    //             table.setRequestForm(requestForm);
-    //             table.setResponseForm(responseForm);
-    //             table.setRequestType(requestType);
-    //             table.setRequestList(processRequestList(parameters, definitinMap));
-    //             table.setResponseList(processResponseCodeList(responses));
+                table.setTitle(title);
+                table.setUrl(url);
+                table.setTag(tag);
+                table.setDescription(description);
+                table.setRequestForm(requestForm);
+                table.setResponseForm(responseForm);
+                table.setRequestType(requestType);
+                table.setRequestList(processRequestList(parameters, definitinMap));
+                table.setResponseList(processResponseCodeList(responses));
 
-    //             // 取出来状态是200时的返回值
-    //             Map<String, Object> obj = (Map<String, Object>) responses.get("200");
-    //             if (obj != null && obj.get("schema") != null) {
-    //                 table.setModelAttr(processResponseModelAttrs(obj, definitinMap));
-    //             }
+                // 取出来状态是200时的返回值
+                Map<String, Object> obj = (Map<String, Object>) responses.get("200");
+                if (obj != null && obj.get("schema") != null) {
+                    table.setModelAttr(processResponseModelAttrs(obj, definitinMap));
+                }
 
-    //             //示例
-    //             table.setRequestParam(processRequestParam(table.getRequestList()));
-    //             table.setResponseParam(processResponseParam(obj, definitinMap));
+                //示例
+                table.setRequestParam(processRequestParam(table.getRequestList()));
+                table.setResponseParam(processResponseParam(obj, definitinMap));
 
-    //             result.add(table);
-    //         }
-    //     }
-    //     return map;
-    // }
+                result.add(table);
+            }
+        }
+        return map;
+    }
 
     //  处理方案二： 新增： 同一路由下所有请求方式单独为一个表格
-    private Map<String, Object> getResultFromString(List<Table> result, String jsonStr) throws IOException {
+    /*private Map<String, Object> getResultFromString(List<Table> result, String jsonStr) throws IOException {
         // convert JSON string to Map
         Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
 
@@ -219,7 +218,7 @@ public class WordServiceImpl implements WordService {
                     if (consumes != null && consumes.size() > 0) {
                         requestForm = StringUtils.join(consumes, ",");
                     } else {
-                    	requestForm = StringUtils.join(defaultConsumes, ",");
+                        requestForm = StringUtils.join(defaultConsumes, ",");
                     }
 
                     // 8.返回参数格式，类似于 application/json
@@ -228,20 +227,20 @@ public class WordServiceImpl implements WordService {
                     if (produces != null && produces.size() > 0) {
                         responseForm = StringUtils.join(produces, ",");
                     } else {
-                    	responseForm = StringUtils.join(defaultProduces, ",");
+                        responseForm = StringUtils.join(defaultProduces, ",");
                     }
 
                     // 9. 请求体
                     List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
 
                     if (!CollectionUtils.isEmpty(parameters)) {
-                    	if (commonParameters != null) {
-                    		parameters.addAll(commonParameters);
-                    	}
+                        if (commonParameters != null) {
+                            parameters.addAll(commonParameters);
+                        }
                     } else {
-                    	if (commonParameters != null) {
-                    		parameters = commonParameters;
-                    	}
+                        if (commonParameters != null) {
+                            parameters = commonParameters;
+                        }
                     }
 
                     // 10.返回体
@@ -275,7 +274,7 @@ public class WordServiceImpl implements WordService {
             }
         }
         return map;
-    }
+    }*/
 
     /**
      * 处理请求参数列表

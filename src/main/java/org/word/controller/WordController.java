@@ -37,7 +37,7 @@ public class WordController {
     @Autowired
     private SpringTemplateEngine springTemplateEngine;
 
-    private String fileName;
+    private String fileName = "toWord";
 
     /**
      * 将 swagger 文档转换成 html 文档，可通过在网页上右键另存为 xxx.doc 的方式转换为 word 文档
@@ -87,7 +87,7 @@ public class WordController {
         response.setContentType("application/octet-stream;charset=utf-8");
         response.setCharacterEncoding("utf-8");
         try (BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream())) {
-            response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode(fileName +  ".doc", "utf-8"));
+            response.setHeader("Content-disposition", "attachment;filename=" + URLEncoder.encode(fileName + ".doc", "utf-8"));
             byte[] bytes = content.getBytes();
             bos.write(bytes, 0, bytes.length);
             bos.flush();
@@ -140,9 +140,9 @@ public class WordController {
         fileName = jsonFile.getOriginalFilename();
 
         if (fileName != null) {
-        	fileName = fileName.replaceAll(".json", "");
+            fileName = fileName.replaceAll(".json", "");
         } else {
-        	fileName = "toWord";
+            fileName = "toWord";
         }
 
         model.addAttribute("url", "http://");
