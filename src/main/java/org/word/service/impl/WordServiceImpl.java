@@ -95,66 +95,69 @@ public class WordServiceImpl implements WordService {
                 // 1.请求路径
                 String url = path.getKey();
 
-                // 2.请求方式，类似为 get,post,delete,put 这样
-                String requestType = StringUtils.join(path.getValue().keySet(), ",");
+                // 2. 循环解析每个子节点，适应同一个路径几种请求方式的场景
+                while (it2.hasNext()) {
+                    Entry<String, Object> request = it2.next();
 
-                // 3. 不管有几种请求方式，都只解析第一种
-                Entry<String, Object> firstRequest = it2.next();
-                Map<String, Object> content = (Map<String, Object>) firstRequest.getValue();
+                    // 2. 请求方式，类似为 get,post,delete,put 这样
+                    String requestType = request.getKey();
 
-                // 4. 大标题（类说明）
-                String title = String.valueOf(((List) content.get("tags")).get(0));
+                    Map<String, Object> content = (Map<String, Object>) request.getValue();
 
-                // 5.小标题 （方法说明）
-                String tag = String.valueOf(content.get("summary"));
+                    // 4. 大标题（类说明）
+                    String title = String.valueOf(((List) content.get("tags")).get(0));
 
-                // 6.接口描述
-                String description = String.valueOf(content.get("summary"));
+                    // 5.小标题 （方法说明）
+                    String tag = String.valueOf(content.get("summary"));
 
-                // 7.请求参数格式，类似于 multipart/form-data
-                String requestForm = "";
-                List<String> consumes = (List) content.get("consumes");
-                if (consumes != null && consumes.size() > 0) {
-                    requestForm = StringUtils.join(consumes, ",");
+                    // 6.接口描述
+                    String description = String.valueOf(content.get("summary"));
+
+                    // 7.请求参数格式，类似于 multipart/form-data
+                    String requestForm = "";
+                    List<String> consumes = (List) content.get("consumes");
+                    if (consumes != null && consumes.size() > 0) {
+                        requestForm = StringUtils.join(consumes, ",");
+                    }
+
+                    // 8.返回参数格式，类似于 application/json
+                    String responseForm = "";
+                    List<String> produces = (List) content.get("produces");
+                    if (produces != null && produces.size() > 0) {
+                        responseForm = StringUtils.join(produces, ",");
+                    }
+
+                    // 9. 请求体
+                    List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
+
+                    // 10.返回体
+                    Map<String, Object> responses = (LinkedHashMap) content.get("responses");
+
+                    //封装Table
+                    Table table = new Table();
+
+                    table.setTitle(title);
+                    table.setUrl(url);
+                    table.setTag(tag);
+                    table.setDescription(description);
+                    table.setRequestForm(requestForm);
+                    table.setResponseForm(responseForm);
+                    table.setRequestType(requestType);
+                    table.setRequestList(processRequestList(parameters, definitinMap));
+                    table.setResponseList(processResponseCodeList(responses));
+
+                    // 取出来状态是200时的返回值
+                    Map<String, Object> obj = (Map<String, Object>) responses.get("200");
+                    if (obj != null && obj.get("schema") != null) {
+                        table.setModelAttr(processResponseModelAttrs(obj, definitinMap));
+                    }
+
+                    //示例
+                    table.setRequestParam(processRequestParam(table.getRequestList()));
+                    table.setResponseParam(processResponseParam(obj, definitinMap));
+
+                    result.add(table);
                 }
-
-                // 8.返回参数格式，类似于 application/json
-                String responseForm = "";
-                List<String> produces = (List) content.get("produces");
-                if (produces != null && produces.size() > 0) {
-                    responseForm = StringUtils.join(produces, ",");
-                }
-
-                // 9. 请求体
-                List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
-
-                // 10.返回体
-                Map<String, Object> responses = (LinkedHashMap) content.get("responses");
-
-                //封装Table
-                Table table = new Table();
-
-                table.setTitle(title);
-                table.setUrl(url);
-                table.setTag(tag);
-                table.setDescription(description);
-                table.setRequestForm(requestForm);
-                table.setResponseForm(responseForm);
-                table.setRequestType(requestType);
-                table.setRequestList(processRequestList(parameters, definitinMap));
-                table.setResponseList(processResponseCodeList(responses));
-
-                // 取出来状态是200时的返回值
-                Map<String, Object> obj = (Map<String, Object>) responses.get("200");
-                if (obj != null && obj.get("schema") != null) {
-                    table.setModelAttr(processResponseModelAttrs(obj, definitinMap));
-                }
-
-                //示例
-                table.setRequestParam(processRequestParam(table.getRequestList()));
-                table.setResponseParam(processResponseParam(obj, definitinMap));
-
-                result.add(table);
             }
         }
         return map;
