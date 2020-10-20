@@ -3,14 +3,18 @@
 <head>
     <meta http-equiv="Content-Type" content="application/msword; charset=utf-8"/>
     <title>toWord</title>
-    <style type="text/css">
+        <style type="text/css">
         .bg {
-            color: #fff;
+            font-size: 14.5px;
+            font-weight: bold;
+            color: #000;
             background-color: #559e68;
         }
 
         table {
-            border: 1px solid #dbe3e4;
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
             table-layout: fixed;
         }
 
@@ -20,13 +24,23 @@
         }
 
         td {
-            padding: 0px 5px 0px 5px;
-            border: 1px solid #dbe3e4;
+            padding-left: 10px;
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
             height: 32px;
             overflow: hidden;
             word-break: break-all;
             word-wrap: break-word;
-            font-size: 14px;
+            font-size: 14.5px;
+        }
+
+        .bg td {
+            font-size: 14.5px;
+        }
+
+        tr td {
+            font-size: 14.5px;
         }
 
         .specialHeight {
@@ -38,24 +52,27 @@
             line-height: 60px;
             margin: 0;
             font-weight: bold;
-            font-size: 20px;
+            font-size: 21px;
         }
 
         .second_title {
             height: 40px;
             line-height: 40px;
             margin: 0;
-            font-weight: bold;
-            font-size: 16px;
+            font-size: 18.5px;
         }
 
         .doc_title {
-            font-size: 24px;
+            font-size: 42.5px;
             text-align: center;
         }
 
         .download_btn {
             float: right;
+        }
+
+        body {
+            font-family: 思源黑体 Normal;
         }
     </style>
 </head>
@@ -73,7 +90,6 @@
         <div th:each="table,tableStat:${tableMap.value}">
 
             <!--这个是每个请求的说明，方便生成文档后进行整理-->
-            <br th:if="${tableStat.index != 0}">
             <h5 class="second_title" th:text="${tableStat.count} + '）' + ${table.tag}"></h5>
 
             <table border="1" cellspacing="0" cellpadding="0" width="100%">
@@ -101,16 +117,16 @@
                     <td colspan="4" th:text="${table.responseForm}"></td>
                 </tr>
 
-                <tr class="bg" align="center">
+                <tr class="bg">
                     <td>参数名</td>
-                    <td>数据类型</td>
-                    <td>参数类型</td>
-                    <td>是否必填</td>
-                    <td>说明</td>
+                    <td width="15%">数据类型</td>
+                    <td width="15%">参数类型</td>
+                    <td width="15%">是否必填</td>
+                    <td width="29%">说明</td>
                 </tr>
 
                 <th:block th:each="request, c:${table.requestList}">
-                    <tr align="center">
+                    <tr>
                         <td align="left" th:text="${c.count} + '.' + ${request.name}"></td>
                         <td th:text="${request.type}"></td>
                         <td th:text="${request.paramType}"></td>
@@ -126,19 +142,19 @@
 
                 </th:block>
 
-                <tr class="bg" align="center">
+                <tr class="bg">
                     <td>状态码</td>
                     <td colspan="2">描述</td>
                     <td colspan="2">说明</td>
                 </tr>
 
-                <tr align="center" th:each="response:${table.responseList}">
+                <tr th:each="response:${table.responseList}">
                     <td th:text="${response.name}"></td>
                     <td colspan="2" th:text="${response.description}"></td>
                     <td colspan="2" th:text="${response.remark}"></td>
                 </tr>
 
-                <tr class="bg" align="center">
+                <tr class="bg">
                     <td>返回属性名</td>
                     <td colspan="2">类型</td>
                     <td colspan="2">说明</td>
@@ -166,7 +182,7 @@
 
 <th:block th:fragment="request(properties,count, lv)">
     <th:block th:each="p,c : ${properties}">
-        <tr align="center">
+        <tr>
             <td align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"
                 th:style="|padding-left:${10*lv}px|"></td>
             <td th:text="${p.type}"></td>
@@ -182,7 +198,7 @@
 
 <th:block th:fragment="response(properties,count, lv)">
     <th:block th:each="p,c : ${properties}">
-        <tr align="center">
+        <tr>
             <td align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"
                 th:style="|padding-left:${10*lv}px|"></td>
             <td colspan="2" th:text="${p.type}"></td>

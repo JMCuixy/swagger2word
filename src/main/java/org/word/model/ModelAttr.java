@@ -15,7 +15,67 @@ import java.util.List;
 @Data
 public class ModelAttr implements Serializable {
 
-    private static final long serialVersionUID = -4074067438450613643L;
+    public String getClassName() {
+		return className;
+	}
+
+	public void setClassName(String className) {
+		this.className = className;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public Boolean getRequire() {
+		return require;
+	}
+
+	public void setRequire(Boolean require) {
+		this.require = require;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public List<ModelAttr> getProperties() {
+		return properties;
+	}
+
+	public void setProperties(List<ModelAttr> properties) {
+		this.properties = properties;
+	}
+
+	public boolean isCompleted() {
+		return isCompleted;
+	}
+
+	public void setCompleted(boolean isCompleted) {
+		this.isCompleted = isCompleted;
+	}
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
+	private static final long serialVersionUID = -4074067438450613643L;
 
     /**
      * 类名
