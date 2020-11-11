@@ -18,11 +18,15 @@ import org.word.utils.RequestUtils;
 import org.word.utils.ResponseUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -42,10 +46,10 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
         Map<String, Object> resultMap = new HashMap<>();
         try {
             String jsonStr = restTemplate.getForObject(swaggerUrl, String.class);
-            resultMap=tableListFromString(jsonStr);
-//            log.debug(JsonUtils.writeJsonStr(resultMap));
+            resultMap = tableListFromString(jsonStr);
+            // log.debug(JsonUtils.writeJsonStr(resultMap));
         } catch (Exception e) {
-//            log.error("parse error", e);
+            log.error("parse error", e);
         }
         return resultMap;
     }
@@ -60,9 +64,9 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
             resultMap.put("tableMap", new TreeMap<>(tableMap));
             resultMap.put("info", map.get("info"));
 
-//            log.debug(JsonUtils.writeJsonStr(resultMap));
+            // log.debug(JsonUtils.writeJsonStr(resultMap));
         } catch (Exception e) {
-//            log.error("parse error", e);
+            log.error("parse error", e);
         	throw e;
         }
         return resultMap;
@@ -71,17 +75,17 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
 	@Override
     public Map<String, Object> tableList(MultipartFile jsonFile) throws IOException {
         Map<String, Object> resultMap = new HashMap<>();
-        List<Table> result = new ArrayList<>();
         try {
             String jsonStr = new String(jsonFile.getBytes());
-            resultMap=tableListFromString(jsonStr);
-//            log.debug(JsonUtils.writeJsonStr(resultMap));
+            resultMap = tableListFromString(jsonStr);
+            // log.debug(JsonUtils.writeJsonStr(resultMap));
         } catch (Exception e) {
-//            log.error("parse error", e);
+            log.error("parse error", e);
         	throw e;
         }
         return resultMap;
     }
+
     private Map<String, Object> getResultFromString(List<Table> result, String jsonStr) throws IOException {
         // convert JSON string to Map
         Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
@@ -201,11 +205,11 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
      * 请求参数格式， 类似于 multipart/form-data
      */
     private List<String> getRequestParamsFormate(Map<String, Object> obj) {
-        Map<String,Object> requestBody = (LinkedHashMap) obj.get("requestBody");
+        Map<String, Object> requestBody = (LinkedHashMap) obj.get("requestBody");
         List<String> requestTypes = new ArrayList();
         if (requestBody != null) {
             Map<String, Map> content = (LinkedHashMap) requestBody.get("content");
-        	Set keys = content.keySet();
+            Set keys = content.keySet();
             return new ArrayList<String>(keys);
         }
         return requestTypes;
@@ -219,7 +223,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
         Map<String, Map> content = (LinkedHashMap) responseObj.get("content");
         List<String> responseTypes = new ArrayList();
         if (content != null) {
-        	Set keys = content.keySet();
+            Set keys = content.keySet();
             return new ArrayList<String>(keys);
         }
         return responseTypes;
@@ -285,7 +289,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
 
             Iterator<Map.Entry<String, Map>> applications = content.entrySet().iterator();
             while (applications.hasNext()) {
-                 Map.Entry<String, Map> application = applications.next();
+                Map.Entry<String, Map> application = applications.next();
 
                 if (application.getValue() != null) {
                     Request request = new Request();
@@ -302,7 +306,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                         request.setType("array");
                     }
                     if (ref != null) {
-//                        request.setType(request.getType() + ":" + ref.toString().replaceAll("#/definitions/", ""));
+                        // request.setType(request.getType() + ":" + ref.toString().replaceAll("#/definitions/", ""));
                         request.setType("object");
                         request.setModelAttr(definitinMap.get(ref));
                     }
@@ -343,7 +347,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
             LinkedHashMap<String, Object> statusCodeInfo = (LinkedHashMap) entry.getValue();
             response.setDescription(String.valueOf(statusCodeInfo.get("description")));
 
-            Map<String, Map> content = (Map)statusCodeInfo.get("content");
+            Map<String, Map> content = (Map) statusCodeInfo.get("content");
 
             if (content != null) {
             	try {
@@ -367,11 +371,11 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                     }
                 }
             } else {
-            	String ref = String.valueOf(statusCodeInfo.get("$ref"));
+                String ref = String.valueOf(statusCodeInfo.get("$ref"));
 
                 if (ref != "") {
-                	ModelAttr modelAttr = definitinMap.get(ref);
-                	response.setDescription(modelAttr.getDescription());
+                    ModelAttr modelAttr = definitinMap.get(ref);
+                    response.setDescription(modelAttr.getDescription());
                 }
 
                 responseList.add(response);
@@ -388,12 +392,11 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
      * @return
      */
     private ModelAttr processResponseModelAttrs(Map<String, Object> responseObj, Map<String, ModelAttr> definitinMap) {
-        Map<String, Map> content = (Map)responseObj.get("content");
+        Map<String, Map> content = (Map) responseObj.get("content");
         //其他类型
         ModelAttr modelAttr = new ModelAttr();
 
         Iterator<Map.Entry<String, Map>> applications = content.entrySet().iterator();
-        // responseObj.put('applications', content.keySet());
 
         while (applications.hasNext()) {
             Map.Entry<String, Map> application = applications.next();
@@ -443,20 +446,20 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
         if (definitions != null) {
             Iterator<String> modelNameIt = definitions.keySet().iterator();
             /**
-                "components": {
-                    "requestBodies": {},
-                    "schemas": {}
-                }
-            */
+             "components": {
+             "requestBodies": {},
+             "schemas": {}
+             }
+             */
             while (modelNameIt.hasNext()) {
                 String modeName = modelNameIt.next();
                 /**
-                    "schemas": {
-                        "cat":{},
-                        "dog":{},
-                    }
+                 "schemas": {
+                 "cat":{},
+                 "dog":{},
+                 }
                  */
-                Map<String, Map<String, Object>> modeContent = (Map<String, Map<String, Object>>)definitions.get(modeName);
+                Map<String, Map<String, Object>> modeContent = (Map<String, Map<String, Object>>) definitions.get(modeName);
 
                 if (modeContent != null) {
                     Iterator<String> modeContentIt = modeContent.keySet().iterator();
@@ -476,7 +479,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
      * 递归生成ModelAttr
      * 对$ref类型设置具体属性
      */
-    private ModelAttr getAndPutModelAttr(Map<String, Map<String, Object>> swaggerMap, Map<String, ModelAttr> resMap,  String parentName, String modeName) {
+    private ModelAttr getAndPutModelAttr(Map<String, Map<String, Object>> swaggerMap, Map<String, ModelAttr> resMap, String parentName, String modeName) {
         ModelAttr modeAttr;
         if ((modeAttr = resMap.get("#/components/" + parentName + "/" + modeName)) == null) {
             modeAttr = new ModelAttr();
@@ -490,7 +493,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
         ArrayList modeRequired = (ArrayList) swaggerMap.get(modeName).get("required");
 
         if (modeProperties != null) {
-        	Iterator<Entry<String, Object>> mIt = modeProperties.entrySet().iterator();
+            Iterator<Entry<String, Object>> mIt = modeProperties.entrySet().iterator();
 
             //解析属性
             while (mIt.hasNext()) {
@@ -576,7 +579,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
             if (properties != null || (items != null)) {
                 ArrayList<String> childRequiredArr = new ArrayList<String>();
                 if (attrInfoMap.get("required") != null) {
-                	childRequiredArr = (ArrayList<String>) attrInfoMap.get("required");
+                    childRequiredArr = (ArrayList<String>) attrInfoMap.get("required");
                 }
                 ModelAttr refModel = getRequestSchemaModelAttr(attrInfoMap, childRequiredArr);
                 if (refModel != null) {
@@ -603,7 +606,7 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
      * 处理responseData直接返回属性值情况
      */
     private ModelAttr getSchemaModelAttr(Map<String, Object> schemaMap) {
-         ModelAttr modeAttr = new ModelAttr();
+        ModelAttr modeAttr = new ModelAttr();
         Map<String, Object> modeProperties = (Map<String, Object>) schemaMap.get("properties");
 
         if ("array".equals(schemaMap.get("type"))) {
@@ -659,9 +662,8 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
      * @return
      */
     private String processResponseParam(Map<String, Object> responseObj, Map<String, ModelAttr> definitinMap) throws JsonProcessingException {
-        Map<String, Map> content = (Map)responseObj.get("content");
-        // if (responseObj != null && content.get("application/json") != null) {
-        if (content != null ) {
+        Map<String, Map> content = (Map) responseObj.get("content");
+        if (content != null) {
             Iterator<Map.Entry<String, Map>> applications = content.entrySet().iterator();
             while (applications.hasNext()) {
                 Map.Entry<String, Map> application = applications.next();
@@ -693,19 +695,15 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
                                 return JsonUtils.writeJsonStr(responseMap);
                             }
                         }
-
-                        // if (schema.get("examples") != null) {
-                       if (schema.get("properties") != null) {
-        //                    Map<String, Object> responseMap = new HashMap<>(8);
+                        if (schema.get("properties") != null) {
                             ModelAttr modelAttr = getSchemaModelAttr(schema);
                             if (modelAttr != null) {
                                 Map<String, Object> responseMap = new HashMap<>(8);
                                 for (ModelAttr subModelAttr : modelAttr.getProperties()) {
                                     responseMap.put(subModelAttr.getName(), getValue(subModelAttr.getType(), subModelAttr));
                                 }
-                            return JsonUtils.writeJsonStr(responseMap);
+                                return JsonUtils.writeJsonStr(responseMap);
                             }
-        //                }
                         }
                     }
                 }
@@ -715,27 +713,27 @@ public class OpenApiWordServiceImpl implements OpenApiWordService {
     }
 
     private String processResponseParam1(Map<String, Object> responseObj, Map<String, ModelAttr> definitinMap) throws JsonProcessingException {
-        Map<String, Map> content = (Map)responseObj.get("content");
+        Map<String, Map> content = (Map) responseObj.get("content");
         // if (responseObj != null && content.get("application/json") != null) {
-        if (content != null ) {
+        if (content != null) {
             Iterator<Map.Entry<String, Map>> applications = content.entrySet().iterator();
             while (applications.hasNext()) {
                 Map.Entry<String, Map> application = applications.next();
 
                 if (application.getValue() != null) {
-                    Map<String,  Map<String, Map>> applicationContent = (Map<String, Map<String, Map>>) application.getValue();
+                    Map<String, Map<String, Map>> applicationContent = (Map<String, Map<String, Map>>) application.getValue();
                     if (applicationContent != null) {
                         Map<String, Map> examples = (Map<String, Map>) applicationContent.get("examples");
 
                         if (examples != null) {
-                        	Map<String, Object> responseData = examples.get("response");
+                            Map<String, Object> responseData = examples.get("response");
 
-                        	if (responseData != null) {
-                        		Object value = responseData.get("value");
-                        		return JsonUtils.writeJsonStr(value);
-                        	}
+                            if (responseData != null) {
+                                Object value = responseData.get("value");
+                                return JsonUtils.writeJsonStr(value);
+                            }
                         } else {
-                        	return "";
+                            return "";
                         }
 
                     }
