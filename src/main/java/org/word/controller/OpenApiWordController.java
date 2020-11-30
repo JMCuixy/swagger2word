@@ -46,11 +46,12 @@ public class OpenApiWordController {
      * @param jsonFile 需要转换成 word 文档的swagger json文件
      * @param response
      * @return
+     * @throws Exception
      */
     @ApiOperation(value = "将 swagger json文件转换成 word文档并下载", notes = "", tags = {"Word"})
     @ApiResponses(value = {@ApiResponse(code = 200, message = "请求成功。")})
     @RequestMapping(value = "/OpenApiFileToWord", method = {RequestMethod.POST})
-    public void getWord(Model model, @ApiParam("swagger json file") @Valid @RequestPart("jsonFile") MultipartFile jsonFile, HttpServletResponse response) {
+    public void getWord(Model model, @ApiParam("swagger json file") @Valid @RequestPart("jsonFile") MultipartFile jsonFile, HttpServletResponse response) throws Exception {
         generateModelData(model, jsonFile);
         writeContentToResponse(model, response);
     }
