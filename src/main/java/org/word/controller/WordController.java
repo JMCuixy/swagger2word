@@ -1,6 +1,7 @@
 package org.word.controller;
 
 import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,9 +18,9 @@ import org.word.service.WordService;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URLEncoder;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -27,6 +28,7 @@ import java.util.Map;
  */
 @Controller
 @Api(tags = "the toWord API")
+@Slf4j
 public class WordController {
 
     @Value("${swagger.url}")
@@ -54,6 +56,18 @@ public class WordController {
                           @ApiParam(value = "资源地址", required = false) @RequestParam(value = "url", required = false) String url,
                           @ApiParam(value = "是否下载", required = false) @RequestParam(value = "download", required = false, defaultValue = "1") Integer download) {
         generateModelData(model, url, download);
+
+        // Is there a localized template available ?
+        Locale currentLocale = Locale.getDefault();
+        String localizedTemplate = "word-" + currentLocale.getLanguage() + "_" + currentLocale.getCountry();
+        String fileName = "/templates/" + localizedTemplate + ".html";
+
+        if (getClass().getResourceAsStream(fileName) != null) {
+            log.info(fileName + " resource found");
+            return localizedTemplate;
+        } else {
+            log.info(fileName + " resource not found, using default");
+        }
         return "word";
     }
 
