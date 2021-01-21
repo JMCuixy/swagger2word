@@ -46,20 +46,20 @@ public class WordServiceImpl implements WordService {
     @Value("${swagger.url}")
     private String swaggerUrl;
 
-	@Override
+    @Override
     public Map<String, Object> tableList(String jsonUrl) {
         jsonUrl = StringUtils.defaultIfBlank(jsonUrl, swaggerUrl);
-        
+
         Map<String, Object> resultMap = new HashMap<>();
         List<Table> result = new ArrayList<>();
         try {
             String jsonStr = restTemplate.getForObject(jsonUrl, String.class);
             // convert JSON string to Map
             Map<String, Object> map = JsonUtils.readValue(jsonStr, HashMap.class);
-            
+
             //解析model
             Map<String, Object> definitinMap = parseDefinitions(map);
-            
+
             //解析paths
             Map<String, Map<String, Object>> paths = (Map<String, Map<String, Object>>) map.get("paths");
             if (paths != null) {
@@ -70,46 +70,46 @@ public class WordServiceImpl implements WordService {
                     Iterator<Map.Entry<String, Object>> it2 = path.getValue().entrySet().iterator();
                     // 1.请求路径
                     String url = path.getKey();
-                    
+
                     // 2.请求方式，类似为 get,post,delete,put 这样
                     String requestType = StringUtils.join(path.getValue().keySet(), ",");
-                    
+
                     // 3. 不管有几种请求方式，都只解析第一种
                     Map.Entry<String, Object> firstRequest = it2.next();
-                    Map<String, Object> content = (Map<String, Object>)firstRequest.getValue();
-                    
+                    Map<String, Object> content = (Map<String, Object>) firstRequest.getValue();
+
                     // 4. 大标题（类说明）
                     String title = String.valueOf(((List) content.get("tags")).get(0));
-                    
+
                     // 5.小标题 （方法说明）
                     String tag = String.valueOf(content.get("summary"));
-                    
+
                     // 6.接口描述
                     String description = String.valueOf(content.get("summary"));
-                    
+
                     // 7.请求参数格式，类似于 multipart/form-data
                     String requestForm = "";
                     List<String> consumes = (List) content.get("consumes");
                     if (consumes != null && consumes.size() > 0) {
                         requestForm = StringUtils.join(consumes, ",");
                     }
-                    
+
                     // 8.返回参数格式，类似于 application/json
                     String responseForm = "";
                     List<String> produces = (List) content.get("produces");
                     if (produces != null && produces.size() > 0) {
                         responseForm = StringUtils.join(produces, ",");
                     }
-                    
+
                     // 9. 请求体
                     List<LinkedHashMap> parameters = (ArrayList) content.get("parameters");
-                    
+
                     // 10.返回体
                     Map<String, Object> responses = (LinkedHashMap) content.get("responses");
 
                     //封装Table
                     Table table = new Table();
-                    
+
                     table.setTitle(title);
                     table.setUrl(url);
                     table.setTag(tag);
@@ -119,45 +119,48 @@ public class WordServiceImpl implements WordService {
                     table.setRequestType(requestType);
                     table.setRequestList(processRequestList(parameters));
                     table.setResponseList(processResponseCodeList(responses));
-                    
+
                     // 取出来状态是200时的返回值
-                    Map<String, Object> obj = (Map<String, Object>)responses.get("200");
-                    if (obj != null && obj.get("schema")!=null) {
-	                    table.setResponseModeAttrList(processResponseModelAttrs(obj, definitinMap));
+                    Map<String, Object> obj = (Map<String, Object>) responses.get("200");
+                    if (obj != null && obj.get("schema") != null) {
+                        table.setResponseModeAttrList(processResponseModelAttrs(obj, definitinMap));
                     }
-                    
+
                     //示例
                     table.setRequestParam(JsonUtils.writeJsonStr(buildParamMap(table.getRequestList(), map)));
                     table.setResponseParam(processResponseParam(obj, map));
-                    
+
                     result.add(table);
                 }
-                
+
                 //排序，同类别的接口归并在一起
                 Collections.sort(result, new Comparator<Table>() {
-                	public int compare(Table o1, Table o2) {
-                		return o1.getTitle().compareTo(o2.getTitle());
-                	};
+                    public int compare(Table o1, Table o2) {
+                        return o1.getTitle().compareTo(o2.getTitle());
+                    }
+
+                    ;
                 });
             }
-            
+
             resultMap.put("tables", result);
             resultMap.put("info", map.get("info"));
-            
+
             log.debug(JsonUtils.writeJsonStr(resultMap));
         } catch (Exception e) {
             log.error("parse error", e);
         }
         return resultMap;
     }
-	
-	/**
-	 * 处理请求参数列表
-	 * @param parameters
-	 * @return
-	 */
-	private List<Request> processRequestList(List<LinkedHashMap> parameters){
-		List<Request> requestList = new ArrayList<>();
+
+    /**
+     * 处理请求参数列表
+     *
+     * @param parameters
+     * @return
+     */
+    private List<Request> processRequestList(List<LinkedHashMap> parameters) {
+        List<Request> requestList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(parameters)) {
             for (Map<String, Object> param : parameters) {
                 Request request = new Request();
@@ -187,16 +190,17 @@ public class WordServiceImpl implements WordService {
             }
         }
         return requestList;
-	}
-	
-    
-	/**
-	 * 处理返回码列表
-	 * @param responses
-	 * @return
-	 */
-	private List<Response> processResponseCodeList(Map<String, Object> responses){
-		List<Response> responseList = new ArrayList<>();
+    }
+
+
+    /**
+     * 处理返回码列表
+     *
+     * @param responses
+     * @return
+     */
+    private List<Response> processResponseCodeList(Map<String, Object> responses) {
+        List<Response> responseList = new ArrayList<>();
         Iterator<Map.Entry<String, Object>> it3 = responses.entrySet().iterator();
         while (it3.hasNext()) {
             Response response = new Response();
@@ -208,128 +212,138 @@ public class WordServiceImpl implements WordService {
 //            response.setRemark(String.valueOf(statusCodeInfo.get("description")));
             responseList.add(response);
         }
-		return responseList;
-	}
-	
-	/**
-	 * 处理返回属性列表
-	 * @param responseObj
-	 * @param definitinMap
-	 * @return
-	 */
-    private List<ResponseModelAttr> processResponseModelAttrs(Map<String, Object> responseObj, Map<String, Object> definitinMap){
-    	List<ResponseModelAttr> attrList=new ArrayList<>();
-        Map<String, Object> schema = (Map<String, Object>)responseObj.get("schema");
-        String type=(String)schema.get("type");
+        return responseList;
+    }
+
+    /**
+     * 处理返回属性列表
+     *
+     * @param responseObj
+     * @param definitinMap
+     * @return
+     */
+    private List<ResponseModelAttr> processResponseModelAttrs(Map<String, Object> responseObj, Map<String, Object> definitinMap) {
+        List<ResponseModelAttr> attrList = new ArrayList<>();
+        Map<String, Object> schema = (Map<String, Object>) responseObj.get("schema");
+        String type = (String) schema.get("type");
         String ref = null;
-        if("array".equals(type)) {//数组
-        	Map<String, Object> items = (Map<String, Object>)schema.get("items");
+        if ("array".equals(type)) {//数组
+            Map<String, Object> items = (Map<String, Object>) schema.get("items");
             if (items != null && items.get("$ref") != null) {
                 ref = (String) items.get("$ref");
             }
-        }else {
-        	if (schema.get("$ref") != null) {//对象
-                ref = (String)schema.get("$ref");
-            }else {//其他类型
-            	ResponseModelAttr attr=new ResponseModelAttr();
-            	attr.setType(type);
-            	attrList.add(attr);
+        } else {
+            if (schema.get("$ref") != null) {//对象
+                ref = (String) schema.get("$ref");
+            } else {//其他类型
+                ResponseModelAttr attr = new ResponseModelAttr();
+                attr.setType(type);
+                attrList.add(attr);
             }
         }
-        
-        if(StringUtils.isNotBlank(ref)) {
-        	Map<String, Object> mode = (Map<String,Object>)definitinMap.get(ref);
-        	
-        	ResponseModelAttr attr=new ResponseModelAttr();
-        	attr.setClassName((String)mode.get("title"));
-        	attr.setName((String)mode.get("description"));
-        	attr.setType(StringUtils.defaultIfBlank(type, StringUtils.EMPTY));
-        	attrList.add(attr);
-        	
-        	attrList.addAll((List<ResponseModelAttr>)mode.get("properties"));
+
+        if (StringUtils.isNotBlank(ref)) {
+            Map<String, Object> mode = (Map<String, Object>) definitinMap.get(ref);
+
+            ResponseModelAttr attr = new ResponseModelAttr();
+            attr.setClassName((String) mode.get("title"));
+            attr.setName((String) mode.get("description"));
+            attr.setType(StringUtils.defaultIfBlank(type, StringUtils.EMPTY));
+            attrList.add(attr);
+
+            attrList.addAll((List<ResponseModelAttr>) mode.get("properties"));
         }
-    	return attrList;
+        return attrList;
     }
-    
+
     /**
      * 解析Definition
+     *
      * @param map
      * @return
      */
-    private Map<String, Object> parseDefinitions(Map<String, Object> map){
-    	Map<String, Map<String, Object>> definitions = (Map<String, Map<String, Object>>) map.get("definitions");
+    private Map<String, Object> parseDefinitions(Map<String, Object> map) {
+        Map<String, Map<String, Object>> definitions = (Map<String, Map<String, Object>>) map.get("definitions");
         Map<String, Object> definitinMap = new HashMap<String, Object>();
-        if(definitions!=null) {
-        	Iterator<String> modelNameIt=definitions.keySet().iterator();
-        	
-        	String modeName = null;
-        	Entry<String, Object> pEntry=null;
-        	ResponseModelAttr modeAttr=null;
-        	Map<String, Object> attrInfoMap=null;
-        	while (modelNameIt.hasNext()) {
-				modeName = modelNameIt.next();
-				Map<String, Object> modeProperties=(Map<String, Object>)definitions.get(modeName).get("properties");
-				Iterator<Entry<String, Object>> pIt= modeProperties.entrySet().iterator();
-				
-				List<ResponseModelAttr> attrList=new ArrayList<>();
-				
-				//解析属性
-				while (pIt.hasNext()) {
-					pEntry=pIt.next();
-					modeAttr=new ResponseModelAttr();
-					modeAttr.setValue(pEntry.getKey());
-					attrInfoMap=(Map<String, Object>)pEntry.getValue();
-					modeAttr.setName((String)attrInfoMap.get("description"));
-					modeAttr.setType((String)attrInfoMap.get("type"));
-					if(attrInfoMap.get("format")!=null) {
-						modeAttr.setType(modeAttr.getType()+"("+(String)attrInfoMap.get("format")+")");
-					}
-					attrList.add(modeAttr);
-				}
-				
-				Map<String, Object> mode=new HashMap<>();
-				mode.put("title", definitions.get(modeName).get("title"));
-				mode.put("description", definitions.get(modeName).get("description"));
-				mode.put("properties", attrList);
-				
-				definitinMap.put("#/definitions/"+modeName, mode);
-			}
+        if (definitions != null) {
+            Iterator<String> modelNameIt = definitions.keySet().iterator();
+
+            String modeName = null;
+            Entry<String, Object> pEntry = null;
+            ResponseModelAttr modeAttr = null;
+            Map<String, Object> attrInfoMap = null;
+            while (modelNameIt.hasNext()) {
+                modeName = modelNameIt.next();
+                Map<String, Object> modeProperties = (Map<String, Object>) definitions.get(modeName).get("properties");
+                //当参数获取为空时跳过
+                List<ResponseModelAttr> attrList = new ArrayList<>();
+                Map<String, Object> mode = new HashMap<>();
+                if (modeProperties == null) {
+                    mode.put("title", definitions.get(modeName).get("title"));
+                    mode.put("description", definitions.get(modeName).get("description"));
+                    mode.put("properties", attrList);
+                    definitinMap.put("#/definitions/" + modeName, mode);
+                    continue;
+                }
+                Iterator<Entry<String, Object>> pIt = modeProperties.entrySet().iterator();
+
+                //解析属性
+                while (pIt.hasNext()) {
+                    pEntry = pIt.next();
+                    modeAttr = new ResponseModelAttr();
+                    modeAttr.setValue(pEntry.getKey());
+                    attrInfoMap = (Map<String, Object>) pEntry.getValue();
+                    modeAttr.setName((String) attrInfoMap.get("description"));
+                    modeAttr.setType((String) attrInfoMap.get("type"));
+                    if (attrInfoMap.get("format") != null) {
+                        modeAttr.setType(modeAttr.getType() + "(" + (String) attrInfoMap.get("format") + ")");
+                    }
+                    attrList.add(modeAttr);
+                }
+
+                mode.put("title", definitions.get(modeName).get("title"));
+                mode.put("description", definitions.get(modeName).get("description"));
+                mode.put("properties", attrList);
+
+                definitinMap.put("#/definitions/" + modeName, mode);
+            }
         }
         return definitinMap;
     }
 
     /**
      * 处理返回值
+     *
      * @param responseObj
      * @param map
      * @return
      */
-    private String processResponseParam(Map<String, Object> responseObj, Map<String, Object> map){
-    	if (responseObj != null && responseObj.get("schema")!=null) {
-	        Map<String, Object> schema = (Map<String, Object>)responseObj.get("schema");
-	        String type=(String)schema.get("type");
-	        String ref = null;
-	        if("array".equals(type)) {//数组
-	        	Map<String, Object> items = (Map<String, Object>)schema.get("items");
-	            if (items != null && items.get("$ref") != null) {
-	                ref = (String) items.get("$ref");
-	                
-	                ObjectNode objectNode = parseRef(ref, map);
-	                ArrayNode arrayNode = JsonUtils.createArrayNode();
-	                arrayNode.add(objectNode);
-	                return arrayNode.toString();
-	            }
-	        }else if (schema.get("$ref") != null) {
-	            ref = (String)schema.get("$ref");
-	            
-	            ObjectNode objectNode = parseRef(ref, map);
-	            return objectNode.toString();
-	        }
+    private String processResponseParam(Map<String, Object> responseObj, Map<String, Object> map) {
+        if (responseObj != null && responseObj.get("schema") != null) {
+            Map<String, Object> schema = (Map<String, Object>) responseObj.get("schema");
+            String type = (String) schema.get("type");
+            String ref = null;
+            if ("array".equals(type)) {//数组
+                Map<String, Object> items = (Map<String, Object>) schema.get("items");
+                if (items != null && items.get("$ref") != null) {
+                    ref = (String) items.get("$ref");
+
+                    ObjectNode objectNode = parseRef(ref, map);
+                    ArrayNode arrayNode = JsonUtils.createArrayNode();
+                    arrayNode.add(objectNode);
+                    return arrayNode.toString();
+                }
+            } else if (schema.get("$ref") != null) {
+                ref = (String) schema.get("$ref");
+
+                ObjectNode objectNode = parseRef(ref, map);
+                return objectNode.toString();
+            }
         }
-        
-    	return StringUtils.EMPTY;
+
+        return StringUtils.EMPTY;
     }
-    
+
 
     /**
      * 从map中解析出指定的ref
