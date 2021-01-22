@@ -176,7 +176,7 @@ public class WordServiceImpl implements WordService {
                     }
                     request.setParamType(ref == null ? "{}" : ref.toString());
                 } else {
-                    request.setType(param.get("type") == null ? "Object" : param.get("type").toString());
+                    request.setType(param.get("type") == null ? "Object" : UpperStringFirst(param.get("type").toString()));
                     request.setParamType(String.valueOf(in));
                 }
                 if (param.get("required") != null) {
@@ -192,6 +192,15 @@ public class WordServiceImpl implements WordService {
         return requestList;
     }
 
+
+    public static String UpperStringFirst(String str) {
+        if (org.springframework.util.StringUtils.isEmpty(str)) {
+            return str;
+        } else {
+            return  str.substring(0, 1).toUpperCase() + str.substring(1);
+        }
+
+    }
 
     /**
      * 处理返回码列表
@@ -223,6 +232,8 @@ public class WordServiceImpl implements WordService {
      * @return
      */
     private List<ResponseModelAttr> processResponseModelAttrs(Map<String, Object> responseObj, Map<String, Object> definitinMap) {
+
+        final Map<String, Object> def=definitinMap;
         List<ResponseModelAttr> attrList = new ArrayList<>();
         Map<String, Object> schema = (Map<String, Object>) responseObj.get("schema");
         String type = (String) schema.get("type");
@@ -237,21 +248,27 @@ public class WordServiceImpl implements WordService {
                 ref = (String) schema.get("$ref");
             } else {//其他类型
                 ResponseModelAttr attr = new ResponseModelAttr();
-                attr.setType(type);
+                attr.setType(UpperStringFirst(type));
                 attrList.add(attr);
             }
         }
 
         if (StringUtils.isNotBlank(ref)) {
-            Map<String, Object> mode = (Map<String, Object>) definitinMap.get(ref);
+            Map<String, Object> mode = (Map<String, Object>) def.get(ref);
 
             ResponseModelAttr attr = new ResponseModelAttr();
             attr.setClassName((String) mode.get("title"));
             attr.setName((String) mode.get("description"));
             attr.setType(StringUtils.defaultIfBlank(type, StringUtils.EMPTY));
             attrList.add(attr);
-
-            attrList.addAll((List<ResponseModelAttr>) mode.get("properties"));
+            attrList.addAll((ArrayList<ResponseModelAttr>) mode.get("properties"));
+        }
+        Iterator<ResponseModelAttr> iterator = attrList.iterator();
+        while (iterator.hasNext()){
+            ResponseModelAttr next = iterator.next();
+          if(next.getType()!=null){
+              next.setType(UpperStringFirst(next.getType()));
+          }
         }
         return attrList;
     }
