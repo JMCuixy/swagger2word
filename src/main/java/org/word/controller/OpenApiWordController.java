@@ -56,7 +56,7 @@ public class OpenApiWordController {
         writeContentToResponse(model, response);
     }
 
-    private void generateModelData(Model model, MultipartFile jsonFile) {
+    private void generateModelData(Model model, MultipartFile jsonFile) throws IOException {
         Map<String, Object> result = openApiWordService.tableList(jsonFile);
         fileName = jsonFile.getOriginalFilename();
 

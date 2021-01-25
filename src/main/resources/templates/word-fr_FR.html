@@ -1,0 +1,217 @@
+<!-- 2020/12/11 - Olivier Bretteville
+    French locale
+-->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="application/msword; charset=utf-8"/>
+    <title>toWord</title>
+        <style type="text/css">
+        .bg {
+            font-family: "Verdana", sans-serif;
+            font-size: 14.5px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #00A6D9;
+        }
+
+        table {
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
+            table-layout: fixed;
+        }
+
+        tr {
+            height: 32px;
+            font-size: 12px;
+        }
+
+        td {
+            padding-left: 10px;
+            border-width: 1px;
+            border-style: solid;
+            border-color: black;
+            height: 32px;
+            overflow: hidden;
+            word-break: break-all;
+            word-wrap: break-word;
+            font-size: 14.5px;
+        }
+
+        .bg td {
+            font-size: 14.5px;
+        }
+
+        tr td {
+            font-size: 14.5px;
+        }
+
+        .specialHeight {
+            height: 40px;
+        }
+
+        .first_title {
+            height: 60px;
+            line-height: 60px;
+            margin: 0;
+            font-weight: bold;
+            font-size: 21px;
+        }
+
+        .second_title {
+            height: 40px;
+            line-height: 40px;
+            margin: 0;
+            font-size: 18.5px;
+        }
+
+        .doc_title {
+            font-size: 42.5px;
+            text-align: center;
+        }
+
+        .download_btn {
+            float: right;
+        }
+
+        body {
+            font-family: Sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+<div style="width:1000px; margin: 0 auto">
+    <div>
+        <p class="doc_title" th:text="${info.title +'（'+ info.version +'）'}"></p>
+        <a class="download_btn" th:if="${download == 1}" th:href="${'/downloadWord?url='+ url}">Télécharger</a>
+        <br>
+    </div>
+    <div th:each="tableMap:${tableMap}" style="margin-bottom:20px;">
+        <!--这个是类的说明-->
+        <h4 class="first_title" th:text="${tableMap.key}"></h4>
+        <div th:each="table,tableStat:${tableMap.value}">
+
+            <!--这个是每个请求的说明，方便生成文档后进行整理-->
+            <h5 class="second_title" th:text="${tableStat.count} + '）' + ${table.tag}"></h5>
+
+            <table border="1" cellspacing="0" cellpadding="0" width="100%">
+                <tr class="bg">
+                    <td colspan="8" th:text="${table.tag}"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" width="25%">Description de l'interface</td>
+                    <td colspan="6" th:text="${table.description}"></td>
+                </tr>
+                <tr>
+                    <td colspan="2">URL</td>
+                    <td colspan="6" th:text="${table.url}"></td>
+                </tr>
+                <tr>
+                    <td colspan="2">Verbe HTTP</td>
+                    <td colspan="6" th:text="${table.requestType}"></td>
+                </tr>
+                <tr>
+                    <td colspan="2">Type de requête</td>
+                    <td colspan="6" th:text="${table.requestForm}"></td>
+                </tr>
+                <tr>
+                    <td colspan="2">Type de retour</td>
+                    <td colspan="6" th:text="${table.responseForm}"></td>
+                </tr>
+
+                <tr class="bg">
+                    <td colspan="2">Nom du paramètre</td>
+                    <td colspan="2">Type</td>
+                    <td colspan="1">Emplacement</td>
+                    <td colspan="1">Obligatoire</td>
+                    <td colspan="2">Description</td>
+                </tr>
+
+                <th:block th:each="request, c:${table.requestList}">
+                    <tr>
+                        <td colspan="2" align="left" th:text="${c.count} + '.' + ${request.name}"></td>
+                        <td colspan="2" th:text="${request.type}"></td>
+                        <td colspan="1" th:text="${request.paramType}"></td>
+                        <td colspan="1" th:if="${request.require}" th:text="oui"></td>
+                        <td colspan="1" th:if="${!request.require}" th:text="non"></td>
+                        <td colspan="2" style="width:40%" th:text="${request.remark}"></td>
+                        <!--                        <td th:if="${request.modelAttr}" th:text="asdfagadfg"></td>-->
+                    </tr>
+                    <th:block th:if="${request.modelAttr}">
+                        <tbody th:include="this::request(${request.modelAttr.properties},${c.count} + '.', 1)"/>
+                    </th:block>
+
+
+                </th:block>
+
+                <tr class="bg">
+                    <td colspan="2">Code retour</td>
+                    <td colspan="3">Description</td>
+                    <td colspan="3">Commentaire</td>
+                </tr>
+
+                <tr th:each="response:${table.responseList}">
+                    <td colspan="2" th:text="${response.name}"></td>
+                    <td colspan="3" th:text="${response.description}"></td>
+                    <td colspan="3" th:text="${response.remark}"></td>
+                </tr>
+
+                <tr class="bg">
+                    <td colspan="2">Format de la réponse</td>
+                    <td colspan="3">Type</td>
+                    <td colspan="3">Description</td>
+                </tr>
+
+<!--               对返回参数 递归生成行-->
+                <tbody th:include="this::response(${table.modelAttr.properties},'', 1)"/>
+
+                <tr class="bg">
+                    <td colspan="8">Exemple</td>
+                </tr>
+                <tr class="specialHeight">
+                    <td class="bg">Requête</td>
+                    <td colspan="7" th:text="${table.requestParam}"></td>
+                </tr>
+                <tr class="specialHeight">
+                    <td class="bg">Résultat</td>
+                    <td colspan="7" th:text="${table.responseParam}"></td>
+                </tr>
+
+            </table>
+            <br/>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="request(properties,count, lv)">
+    <th:block th:each="p,c : ${properties}">
+        <tr>
+            <td colspan="2" align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"
+                th:style="|padding-left:${10*lv}px|"></td>
+            <td colspan="2" th:text="${p.type}"></td>
+            <td></td>
+            <td th:if="${p.require}" th:text="oui"></td>
+            <td th:if="${!p.require}" th:text="non"></td>
+            <td colspan="2" th:text="${p.description}"></td>
+        </tr>
+        <th:block th:unless="${#lists.isEmpty(p.properties)}"
+                  th:include="this::request(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>
+    </th:block>
+</th:block>
+
+<th:block th:fragment="response(properties,count, lv)">
+    <th:block th:each="p,c : ${properties}">
+        <tr>
+            <td colspan="2" align="left" th:text="${count} + '' + ${c.count} + '.' + ${p.name}"
+                th:style="|padding-left:${10*lv}px|"></td>
+            <td colspan="2" th:text="${p.type}"></td>
+            <td colspan="4" th:text="${p.description}"></td>
+        </tr>
+        <th:block th:unless="${#lists.isEmpty(p.properties)}"
+                  th:include="this::response(${p.properties},${count} + '' + ${c.count} + '.',${lv+1})"/>
+    </th:block>
+</th:block>
+</body>
+</html>
