@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="application/msword; charset=utf-8"/>
     <title>toWord</title>
-        <style type="text/css">
+    <style type="text/css">
         .bg {
             font-size: 14.5px;
             font-weight: bold;
@@ -78,7 +78,7 @@
 </head>
 
 <body>
-<div style="width:800px; margin: 0 auto" >
+<div style="width:800px; margin: 0 auto">
     <div>
         <p class="doc_title" th:text="${info.title +'（'+ info.version +'）'}"></p>
         <a class="download_btn" th:if="${download == 1}" th:href="${'/downloadWord?url='+ url}">下载文档</a>
@@ -160,7 +160,7 @@
                     <td colspan="2">说明</td>
                 </tr>
 
-<!--               对返回参数 递归生成行-->
+                <!--               对返回参数 递归生成行-->
                 <tbody th:include="this::response(${table.modelAttr.properties},'', 1)"/>
 
                 <tr class="bg">
