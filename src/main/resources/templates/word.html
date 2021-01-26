@@ -78,7 +78,7 @@
 </head>
 
 <body>
-<div style="width:1000px; margin: 0 auto">
+<div style="width:800px; margin: 0 auto" >
     <div>
         <p class="doc_title" th:text="${info.title +'（'+ info.version +'）'}"></p>
         <a class="download_btn" th:if="${download == 1}" th:href="${'/downloadWord?url='+ url}">下载文档</a>
@@ -106,7 +106,7 @@
                 </tr>
                 <tr>
                     <td>请求方式</td>
-                    <td colspan="4" th:text="${table.requestType}"></td>
+                    <td colspan="4" th:text="${#strings.toUpperCase(table.requestType)}"></td>
                 </tr>
                 <tr>
                     <td>请求类型</td>

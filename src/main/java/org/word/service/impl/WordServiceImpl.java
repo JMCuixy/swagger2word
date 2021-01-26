@@ -300,6 +300,7 @@ public class WordServiceImpl implements WordService {
                 request.setParamType(String.valueOf(in));
                 // 考虑对象参数类型
                 if (in != null && "body".equals(in)) {
+                    request.setType(String.valueOf(in));
                     Map<String, Object> schema = (Map) param.get("schema");
                     Object ref = schema.get("$ref");
                     // 数组情况另外处理
