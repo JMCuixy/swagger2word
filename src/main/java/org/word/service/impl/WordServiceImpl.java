@@ -427,9 +427,40 @@ public class WordServiceImpl implements WordService {
         if (modeProperties == null) {
             return null;
         }
+
+        List<ModelAttr> attrList = getModelAttrs(swaggerMap, resMap, modeAttr, modeProperties);
+        List allOf = (List) swaggerMap.get(modeName).get("allOf");
+        if(allOf!=null){
+            for (int i = 0; i < allOf.size(); i++) {
+                Map c = (Map) allOf.get(i);
+                if(c.get("$ref")!=null){
+                    String refName = c.get("$ref").toString();
+                    //截取 #/definitions/ 后面的
+                    String clsName = refName.substring(14);
+                    Map<String, Object> modeProperties1 = (Map<String, Object>) swaggerMap.get(clsName).get("properties");
+                    List<ModelAttr> attrList1 = getModelAttrs(swaggerMap, resMap, modeAttr, modeProperties1);
+                    if(attrList1!=null && attrList!=null){
+                        attrList.addAll(attrList1);
+                    }else if(attrList==null && attrList1!=null){
+                        attrList = attrList1;
+                    }
+                }
+            }
+        }
+
+        Object title = swaggerMap.get(modeName).get("title");
+        Object description = swaggerMap.get(modeName).get("description");
+        modeAttr.setClassName(title == null ? "" : title.toString());
+        modeAttr.setDescription(description == null ? "" : description.toString());
+        modeAttr.setProperties(attrList);
+        return modeAttr;
+    }
+
+    private List<ModelAttr> getModelAttrs(Map<String, Map<String, Object>> swaggerMap, Map<String, ModelAttr> resMap, ModelAttr modeAttr, Map<String, Object> modeProperties) {
         Iterator<Entry<String, Object>> mIt = modeProperties.entrySet().iterator();
 
         List<ModelAttr> attrList = new ArrayList<>();
+
         //解析属性
         while (mIt.hasNext()) {
             Entry<String, Object> mEntry = mIt.next();
@@ -458,12 +489,7 @@ public class WordServiceImpl implements WordService {
             child.setDescription((String) attrInfoMap.get("description"));
             attrList.add(child);
         }
-        Object title = swaggerMap.get(modeName).get("title");
-        Object description = swaggerMap.get(modeName).get("description");
-        modeAttr.setClassName(title == null ? "" : title.toString());
-        modeAttr.setDescription(description == null ? "" : description.toString());
-        modeAttr.setProperties(attrList);
-        return modeAttr;
+        return attrList;
     }
 
     /**
