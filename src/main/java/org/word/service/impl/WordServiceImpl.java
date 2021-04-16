@@ -16,14 +16,8 @@ import org.word.service.WordService;
 import org.word.utils.JsonUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -427,8 +421,10 @@ public class WordServiceImpl implements WordService {
         if (modeProperties == null) {
             return null;
         }
+        //必填字段
+        List<String> requiredProps = (List<String>)swaggerMap.get(modeName).get("required");
 
-        List<ModelAttr> attrList = getModelAttrs(swaggerMap, resMap, modeAttr, modeProperties);
+        List<ModelAttr> attrList = getModelAttrs(swaggerMap, resMap, modeAttr, modeProperties,requiredProps);
         List allOf = (List) swaggerMap.get(modeName).get("allOf");
         if(allOf!=null){
             for (int i = 0; i < allOf.size(); i++) {
@@ -438,7 +434,8 @@ public class WordServiceImpl implements WordService {
                     //截取 #/definitions/ 后面的
                     String clsName = refName.substring(14);
                     Map<String, Object> modeProperties1 = (Map<String, Object>) swaggerMap.get(clsName).get("properties");
-                    List<ModelAttr> attrList1 = getModelAttrs(swaggerMap, resMap, modeAttr, modeProperties1);
+                    requiredProps = (List<String>)swaggerMap.get(clsName).get("required");
+                    List<ModelAttr> attrList1 = getModelAttrs(swaggerMap, resMap, modeAttr, modeProperties1,requiredProps);
                     if(attrList1!=null && attrList!=null){
                         attrList.addAll(attrList1);
                     }else if(attrList==null && attrList1!=null){
@@ -456,7 +453,7 @@ public class WordServiceImpl implements WordService {
         return modeAttr;
     }
 
-    private List<ModelAttr> getModelAttrs(Map<String, Map<String, Object>> swaggerMap, Map<String, ModelAttr> resMap, ModelAttr modeAttr, Map<String, Object> modeProperties) {
+    private List<ModelAttr> getModelAttrs(Map<String, Map<String, Object>> swaggerMap, Map<String, ModelAttr> resMap, ModelAttr modeAttr, Map<String, Object> modeProperties,List<String> requiredProps) {
         Iterator<Entry<String, Object>> mIt = modeProperties.entrySet().iterator();
 
         List<ModelAttr> attrList = new ArrayList<>();
@@ -472,6 +469,9 @@ public class WordServiceImpl implements WordService {
                 child.setType(child.getType() + "(" + attrInfoMap.get("format") + ")");
             }
             child.setType(StringUtils.defaultIfBlank(child.getType(), "object"));
+            if (requiredProps != null && requiredProps.contains(mEntry.getKey())) {
+                child.setRequire(true);
+            }
 
             Object ref = attrInfoMap.get("$ref");
             Object items = attrInfoMap.get("items");
@@ -616,6 +616,7 @@ public class WordServiceImpl implements WordService {
                 }
                 list.add(map);
                 return list;
+            case "body":
             case "object":
                 map = new LinkedHashMap<>();
                 if (modelAttr != null && !CollectionUtils.isEmpty(modelAttr.getProperties())) {
