@@ -16,14 +16,8 @@ import org.word.service.WordService;
 import org.word.utils.JsonUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -430,18 +424,18 @@ public class WordServiceImpl implements WordService {
 
         List<ModelAttr> attrList = getModelAttrs(swaggerMap, resMap, modeAttr, modeProperties);
         List allOf = (List) swaggerMap.get(modeName).get("allOf");
-        if(allOf!=null){
+        if (allOf != null) {
             for (int i = 0; i < allOf.size(); i++) {
                 Map c = (Map) allOf.get(i);
-                if(c.get("$ref")!=null){
+                if (c.get("$ref") != null) {
                     String refName = c.get("$ref").toString();
                     //截取 #/definitions/ 后面的
                     String clsName = refName.substring(14);
                     Map<String, Object> modeProperties1 = (Map<String, Object>) swaggerMap.get(clsName).get("properties");
                     List<ModelAttr> attrList1 = getModelAttrs(swaggerMap, resMap, modeAttr, modeProperties1);
-                    if(attrList1!=null && attrList!=null){
+                    if (attrList1 != null && attrList != null) {
                         attrList.addAll(attrList1);
-                    }else if(attrList==null && attrList1!=null){
+                    } else if (attrList == null && attrList1 != null) {
                         attrList = attrList1;
                     }
                 }
@@ -453,6 +447,15 @@ public class WordServiceImpl implements WordService {
         modeAttr.setClassName(title == null ? "" : title.toString());
         modeAttr.setDescription(description == null ? "" : description.toString());
         modeAttr.setProperties(attrList);
+        Object required = swaggerMap.get(modeName).get("required");
+        if (Objects.nonNull(required)) {
+            if ((required instanceof List) && !CollectionUtils.isEmpty(attrList)) {
+                List requiredList = (List) required;
+                attrList.stream().filter(m -> requiredList.contains(m.getName())).forEach(m -> m.setRequire(true));
+            } else if (required instanceof Boolean) {
+                modeAttr.setRequire(Boolean.parseBoolean(required.toString()));
+            }
+        }
         return modeAttr;
     }
 
