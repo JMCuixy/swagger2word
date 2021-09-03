@@ -16,7 +16,11 @@ spring:
     enabled: true
     encoding: UTF-8
     mode: HTML5
-
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
 # Swagger json url address
 # etc. https://petstore.swagger.io/
 swagger.url: https://petstore.swagger.io/v2/swagger.json
