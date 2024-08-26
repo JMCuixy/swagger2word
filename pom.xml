@@ -18,7 +18,7 @@
     <properties>
         <skipTests>true</skipTests>
         <java.version>1.8</java.version>
-        <springfox-version>2.6.1</springfox-version>
+        <springfox-version>2.10.0</springfox-version>
     </properties>
 
     <dependencies>
